@@ -5,8 +5,11 @@ Interactive 3D mockup of a black origami paper cube for the 10th anniversary of 
 ## Stack
 
 - Plain HTML, CSS and JavaScript. No build step, no framework, no bundler.
+- opentype.js **1.3.4**, vendored at `vendor/opentype.min.js` (global `opentype`), used only by the SVG export.
 - three.js **r128**, vendored at `vendor/three.min.js` (UMD global `THREE`). Do not upgrade casually: r128 uses `outputEncoding`/`sRGBEncoding`; newer versions renamed these to `outputColorSpace`/`SRGBColorSpace` and changed lighting units.
-- Google Fonts: Montserrat (cube type), Archivo (UI), Space Grotesk, DM Serif Display.
+- Cube type: **Galano Grotesque** (Regular 400, Medium 500, Semi Bold 600), self-hosted from `fonts/` via `@font-face` in `src/styles.css`. It is a commercial font, so `fonts/` is gitignored and never pushed: the public site falls back to Montserrat, and its SVG export keeps text as live `<text>`. Galano shows only when running locally with the OTFs in `fonts/`.
+- Google Fonts: Archivo (UI), plus Montserrat, Space Grotesk and DM Serif Display as extra choices.
+- The VŠKK mark is the official 2021 logo, never set as text. `assets/vskk-logo-white.svg` is the white-letters cut of it; `src/app.js` embeds the same path as a data URI (`LOGO`) so canvases stay untainted and export works, also on `file://`.
 
 ## Run locally
 
@@ -15,7 +18,7 @@ npm run dev      # serves on http://localhost:5173
 npm run check    # syntax check of src/app.js
 ```
 
-Opening `index.html` via `file://` also works.
+Opening `index.html` via `file://` works, but browsers block the self-hosted Galano fonts there, so type falls back to sans-serif. Use a local server to see real type.
 
 ## Files
 
@@ -23,6 +26,7 @@ Opening `index.html` via `file://` also works.
 - `src/styles.css` – UI styles. Colors are CSS variables on `:root` with a dark-mode override; keep new colors as variables.
 - `src/app.js` – everything else, in one IIFE, in this order: state → helpers → paper textures → three.js scene → face drawing → picking & dragging → editor → scene controls → export → render loop → start.
 - `vendor/three.min.js` – three.js r128.
+- `fonts/` – Galano Grotesque OTFs. `assets/` – logo SVGs. `logo/` – standalone vector logo of the cube.
 - `.github/workflows/pages.yml` – deploys the repo root to GitHub Pages on push to `main`.
 
 ## How it works
@@ -33,6 +37,7 @@ Opening `index.html` via `file://` also works.
 - **Paper** is procedural (`genPaper(i)`): seeded noise + low-frequency mottling + fibres + fold creases, with a matching bump map in `bumpC[i]`. Seeds are per face so faces differ but stay stable between reloads.
 - **Interaction**: pointer events raycast against the cube (`pick`) to get face + UV. A hit on an element starts a move (elements can cross onto other faces); otherwise the drag rotates the cube via world-axis quaternions.
 - **Grounding**: each frame `settle()` puts the shadow plane and contact shadow under the lowest cube corner so the cube always rests on the surface.
+- **SVG export** (`buildSvg`) projects the visible faces through the live camera and writes flat paths: face fill = paper colour, white strokes on edges shared by two visible faces, elements clipped per face. Points are projected one by one (Bézier control points included), so perspective matches the 3D view. Galano text becomes outlines via opentype.js (`VFONTS` maps family+weight to OTF); other fonts stay `<text>` with an affine transform; elements with `vec` (the VŠKK mark) are vector paths; uploaded images are embedded `<image>`s. No texture, grain or shadow.
 - **Export** composites the background (gold gradient, uploaded photo with blur, or transparent) with the WebGL canvas at 2× and saves a PNG. Selection outlines are hidden during export.
 
 ## Conventions

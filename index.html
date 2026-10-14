@@ -34,9 +34,9 @@
       <div class="editor" id="editor" hidden>
         <div class="row two" id="rowText"><label for="eText">Text</label><textarea id="eText" rows="2"></textarea></div>
         <div class="row two" id="rowFont"><label for="eFont">Font</label>
-          <select id="eFont"><option>Montserrat</option><option>Archivo</option><option>Space Grotesk</option><option>DM Serif Display</option></select></div>
+          <select id="eFont"><option>Galano Grotesque</option><option>Montserrat</option><option>Archivo</option><option>Space Grotesk</option><option>DM Serif Display</option></select></div>
         <div class="row two" id="rowWeight"><label for="eWeight">Weight</label>
-          <select id="eWeight"><option value="300">Light</option><option value="400">Regular</option><option value="600">Semibold</option><option value="800">Extra bold</option></select></div>
+          <select id="eWeight"><option value="300">Light</option><option value="400">Regular</option><option value="500">Medium</option><option value="600">Semibold</option><option value="800">Extra bold</option></select></div>
         <div class="row two"><label for="eColor">Color</label><input type="color" id="eColor"></div>
         <div class="row"><label for="eSize">Size</label><input type="range" id="eSize" min="40" max="900" step="1"><output id="oSize"></output></div>
         <div class="row" id="rowSpacing"><label for="eSpacing">Spacing</label><input type="range" id="eSpacing" min="-30" max="80" step="1"><output id="oSpacing"></output></div>
@@ -75,14 +75,15 @@
 
     <section>
       <h2>Export</h2>
-      <div class="btns"><button class="primary" id="export">Export PNG</button></div>
-      <p class="note" id="exportNote">Exports at twice the screen resolution, without selection outlines.</p>
+      <div class="btns"><button class="primary" id="export">Export PNG</button><button id="exportSvg">Export SVG</button></div>
+      <p class="note" id="exportNote">PNG exports at twice the screen resolution. SVG is a flat vector of the current view: faces, logo and Galano text as outlines, no paper texture or shadow.</p>
     </section>
   </aside>
 </div>
 <div class="toast" id="toast" role="status" aria-live="polite"></div>
 
 <script src="vendor/three.min.js"></script>
+<script src="vendor/opentype.min.js"></script>
 <script src="src/app.js"></script>
 </body>
 </html>
