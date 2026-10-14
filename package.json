@@ -1,0 +1,10 @@
+{
+  "name": "vskk-cube",
+  "version": "1.0.0",
+  "private": true,
+  "description": "Interactive 3D paper cube for the VŠKK 10th anniversary",
+  "scripts": {
+    "dev": "npx --yes serve@14.2.4 -l 5173 .",
+    "check": "node --check src/app.js"
+  }
+}
