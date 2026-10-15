@@ -1,0 +1,92 @@
+<!doctype html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover">
+<title>VŠKK 10 let – paper cube studio</title>
+<meta name="description" content="Interactive 3D paper cube for the VŠKK 10th anniversary. Move text and logos, match your photo, export PNG.">
+<meta property="og:title" content="VŠKK 10 let – paper cube studio">
+<link rel="icon" href="data:image/svg+xml,<svg xmlns=%22http://www.w3.org/2000/svg%22 viewBox=%220 0 100 100%22><rect x=%2215%22 y=%2215%22 width=%2270%22 height=%2270%22 rx=%226%22 fill=%22%23191919%22/><text x=%2250%22 y=%2263%22 font-size=%2236%22 text-anchor=%22middle%22 fill=%22%23f2b630%22 font-family=%22sans-serif%22 font-weight=%22800%22>10</text></svg>">
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link href="https://fonts.googleapis.com/css2?family=Archivo:wght@400;500;600;800&family=Montserrat:wght@300;400;500;600;800&family=DM+Serif+Display&family=Space+Grotesk:wght@300;500;700&display=swap" rel="stylesheet">
+<link rel="stylesheet" href="src/styles.css">
+</head>
+<body>
+<div class="app">
+  <div class="stage" id="stage">
+    <div class="bg" id="bg"></div>
+    <canvas id="gl" aria-label="3D paper cube. Drag to rotate, drag text or logo to move it."></canvas>
+    <div class="hint" id="hint">Drag the cube to turn it. Drag any text or logo to move it, even onto another face. Scroll to zoom.</div>
+  </div>
+
+  <aside class="panel">
+    <p class="brand"><b>VŠKK cube</b><span>paper mockup studio</span></p>
+
+    <section>
+      <h2>Text and logos</h2>
+      <div class="chips" id="chips"></div>
+      <div class="btns">
+        <button id="addText">Add text</button>
+        <span class="file"><button tabindex="-1">Add logo image</button><input type="file" id="addLogo" accept="image/png,image/svg+xml,image/webp,image/jpeg" aria-label="Add logo image"></span>
+      </div>
+      <p class="empty" id="empty">Select a text or logo above, or click one on the cube.</p>
+      <div class="editor" id="editor" hidden>
+        <div class="row two" id="rowText"><label for="eText">Text</label><textarea id="eText" rows="2"></textarea></div>
+        <div class="row two" id="rowFont"><label for="eFont">Font</label>
+          <select id="eFont"><option>Galano Grotesque</option><option>Montserrat</option><option>Archivo</option><option>Space Grotesk</option><option>DM Serif Display</option></select></div>
+        <div class="row two" id="rowWeight"><label for="eWeight">Weight</label>
+          <select id="eWeight"><option value="300">Light</option><option value="400">Regular</option><option value="500">Medium</option><option value="600">Semibold</option><option value="800">Extra bold</option></select></div>
+        <div class="row two"><label for="eColor">Color</label><div class="colors"><input type="color" id="eColor">
+          <button class="swatch" data-c="#fdc40a" style="--c:#fdc40a" title="VŠKK yellow #fdc40a" aria-label="VŠKK yellow"></button>
+          <button class="swatch" data-c="#ffffff" style="--c:#ffffff" title="White" aria-label="White"></button>
+          <button class="swatch" data-c="#1e1e20" style="--c:#1e1e20" title="Paper black #1e1e20" aria-label="Paper black"></button></div></div>
+        <div class="row"><label for="eSize">Size</label><input type="range" id="eSize" min="40" max="900" step="1"><output id="oSize"></output></div>
+        <div class="row" id="rowSpacing"><label for="eSpacing">Spacing</label><input type="range" id="eSpacing" min="-30" max="80" step="1"><output id="oSpacing"></output></div>
+        <div class="row"><label for="eRot">Rotation</label><input type="range" id="eRot" min="-180" max="180" step="1"><output id="oRot"></output></div>
+        <div class="row"><label for="eOpacity">Opacity</label><input type="range" id="eOpacity" min="0.1" max="1" step="0.01"><output id="oOpacity"></output></div>
+        <div class="row"><label for="eX">Left–right</label><input type="range" id="eX" min="0" max="1" step="0.002"><output id="oX"></output></div>
+        <div class="row"><label for="eY">Up–down</label><input type="range" id="eY" min="0" max="1" step="0.002"><output id="oY"></output></div>
+        <div class="row two"><label for="eFace">Face</label>
+          <select id="eFace"><option value="4">Front</option><option value="2">Top</option><option value="1">Left</option><option value="0">Right</option><option value="5">Back</option><option value="3">Bottom</option></select></div>
+        <div class="btns"><button id="dup">Duplicate</button><button id="front">Bring forward</button><button class="danger" id="del">Delete</button></div>
+      </div>
+    </section>
+
+    <section>
+      <h2>Paper cube</h2>
+      <div class="row two"><label for="paper">Paper color</label><input type="color" id="paper" value="#1e1e20"></div>
+      <div class="row"><label for="crease">Folds</label><input type="range" id="crease" min="0" max="1" step="0.05" value="0.45"><output id="oCrease">0.45</output></div>
+      <div class="row"><label for="rough">Sheen</label><input type="range" id="rough" min="0" max="1" step="0.05" value="0.2"><output id="oRough">0.20</output></div>
+      <div class="row"><label for="light">Light angle</label><input type="range" id="light" min="-180" max="180" step="1" value="-30"><output id="oLight">-30°</output></div>
+      <div class="row"><label for="shadow">Shadow</label><input type="range" id="shadow" min="0" max="1" step="0.05" value="0.55"><output id="oShadow">0.55</output></div>
+      <div class="row"><label for="zoom">Zoom</label><input type="range" id="zoom" min="3.2" max="9" step="0.05" value="6.4"><output id="oZoom"></output></div>
+      <div class="btns"><button id="spin" aria-pressed="false">Auto-rotate</button><button id="reset">Reset view</button></div>
+    </section>
+
+    <section>
+      <h2>Background</h2>
+      <div class="seg" role="group" aria-label="Background">
+        <button data-bg="warm" aria-pressed="true">Gold</button>
+        <button data-bg="image" aria-pressed="false">Your photo</button>
+        <button data-bg="none" aria-pressed="false">Transparent</button>
+      </div>
+      <div class="btns"><span class="file"><button tabindex="-1">Upload photo</button><input type="file" id="bgFile" accept="image/*" aria-label="Upload background photo"></span></div>
+      <div class="row"><label for="blur">Blur</label><input type="range" id="blur" min="0" max="12" step="0.5" value="0"><output id="oBlur">0</output></div>
+      <p class="note">Upload your crane photo to match light and angle. Transparent export is handy for compositing in Photoshop.</p>
+    </section>
+
+    <section>
+      <h2>Export</h2>
+      <div class="btns"><button class="primary" id="export">Export PNG</button><button id="exportSvg">Export SVG</button></div>
+      <p class="note" id="exportNote">PNG exports at twice the screen resolution. SVG is a flat vector of the current view: faces, logo and Galano text as outlines, no paper texture or shadow.</p>
+    </section>
+  </aside>
+</div>
+<div class="toast" id="toast" role="status" aria-live="polite"></div>
+
+<script src="vendor/three.min.js"></script>
+<script src="vendor/opentype.min.js"></script>
+<script src="src/app.js"></script>
+</body>
+</html>
