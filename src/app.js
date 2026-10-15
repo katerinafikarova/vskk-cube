@@ -15,7 +15,7 @@ LOGO.src = 'data:image/svg+xml;charset=utf-8,' + encodeURIComponent(`<svg xmlns=
 LOGO.onload = () => redraw([2]);
 let elements = [
   mk({ type:'image', img:LOGO, vec:{ d:LOGO_D, vb:LOGO_VB, fill:'#ffffff' }, face:2, x:.495, y:.46, size:570 }),
-  mk({ text:'10', face:4, x:.54, y:.40, size:400, weight:600, color:'#f2b630', spacing:-8 }),
+  mk({ text:'10', face:4, x:.54, y:.40, size:400, weight:600, color:'#fdc40a', spacing:-8 }),
   mk({ text:'let', face:4, x:.56, y:.72, size:210, weight:400 })
 ];
 let selected = null;
@@ -248,12 +248,13 @@ function syncEditor(){
 function bind(key, parse, after){
   E[key].addEventListener('input', async ()=>{
     if(!selected) return; const old=selected.face; selected[key]=parse(E[key].value);
-    if(key==='font'||key==='weight'){ try{ await document.fonts.load(`${selected.weight} 100px "${selected.font}"`); }catch(_){} }
+    if(key==='font'||key==='weight'){ await Promise.allSettled([document.fonts.load(`${selected.weight} 100px "${selected.font}"`), document.fonts.load(`${selected.weight} 100px "Montserrat"`)]); }
     redraw(old===selected.face?[old]:[old,selected.face]); syncEditor(); if(after) after();
   });
 }
 bind('text', v=>v, renderChips); bind('font', v=>v); bind('weight', v=>+v); bind('color', v=>v);
 bind('size', v=>+v); bind('spacing', v=>+v); bind('rot', v=>+v); bind('opacity', v=>+v);
+document.querySelectorAll('.swatch').forEach(b=>b.onclick=()=>{ E.color.value=b.dataset.c; E.color.dispatchEvent(new Event('input')); });
 bind('x', v=>+v); bind('y', v=>+v); bind('face', v=>+v);
 
 $('addText').onclick=()=>{ const f = selected ? selected.face : 4; const e=mk({ text:'Text', face:f, size:160, weight:600 }); elements.push(e); select(e); E.text.focus(); E.text.select(); };
@@ -335,13 +336,20 @@ async function deliver(blob, name, msg){
 
 /* ---------- SVG export: the current view as flat vectors ---------- */
 // Visible faces and everything on them are projected through the live camera.
-// Text becomes glyph outlines (opentype.js) for fonts we host; other fonts stay <text>.
-const VFONTS = { 'Galano Grotesque': { 400:'fonts/GalanoGrotesque-Regular.otf', 500:'fonts/GalanoGrotesque-Medium.otf', 600:'fonts/GalanoGrotesque-SemiBold.otf' } };
+// Text becomes glyph outlines (opentype.js) for fonts we have files for. Galano is only
+// present locally (licence), so without it we outline with Montserrat, which is also
+// what the canvas falls back to. Other fonts stay <text>.
+const MONT = { 300:'vendor/montserrat/Montserrat-300.ttf', 400:'vendor/montserrat/Montserrat-400.ttf', 500:'vendor/montserrat/Montserrat-500.ttf', 600:'vendor/montserrat/Montserrat-600.ttf', 800:'vendor/montserrat/Montserrat-800.ttf' };
+const VFONTS = { 'Galano Grotesque': { 400:'fonts/GalanoGrotesque-Regular.otf', 500:'fonts/GalanoGrotesque-Medium.otf', 600:'fonts/GalanoGrotesque-SemiBold.otf' }, 'Montserrat': MONT };
+const FALLBACK = { 'Galano Grotesque': 'Montserrat' };
 const fontCache = {};
-function vecFont(family, weight){
+function loadFont(family, weight){
   const set=VFONTS[family]; if(!set || !window.opentype) return Promise.resolve(null);
   const w=Object.keys(set).map(Number).sort((a,b)=>Math.abs(a-weight)-Math.abs(b-weight))[0], url=set[w];
   return fontCache[url] || (fontCache[url] = fetch(url).then(r=>{ if(!r.ok) throw new Error(url); return r.arrayBuffer(); }).then(buf=>opentype.parse(buf)).catch(()=>null));
+}
+async function vecFont(family, weight){
+  return (await loadFont(family, weight)) || (FALLBACK[family] ? loadFont(FALLBACK[family], weight) : null);
 }
 function parsePath(d){
   const tok=d.match(/[MmLlHhVvCcSsQqTtZz]|[-+]?(?:\d+\.?\d*|\.\d+)(?:e[-+]?\d+)?/g)||[], out=[];
@@ -428,8 +436,8 @@ function buildSvg(fonts){
           });
           if(cmds.length) ink+=`<path d="${toD(cmds)}" fill="${e.color}"${op}/>`;
         } else {
-          const t=lines.map((l,li)=>`<tspan x="0" y="${f2((li-(lines.length-1)/2)*lh)}">${esc(l)}</tspan>`).join('');
-          ink+=`<text transform="${affine()}" font-family="'${esc(e.font)}', Montserrat, sans-serif" font-weight="${e.weight}" font-size="${e.size}" letter-spacing="${e.spacing}" text-anchor="middle" dominant-baseline="central" fill="${e.color}"${op}>${t}</text>`;
+          const t=lines.map((l,li)=>`<tspan x="${f2(e.spacing/2)}" y="${f2((li-(lines.length-1)/2)*lh + e.size*.35)}">${esc(l)}</tspan>`).join('');
+          ink+=`<text transform="${affine()}" font-family="'${esc(e.font)}', sans-serif" font-weight="${e.weight}" font-size="${e.size}" letter-spacing="${e.spacing}" text-anchor="middle" fill="${e.color}"${op}>${t}</text>`;
         }
       }
     }
@@ -447,7 +455,7 @@ $('exportSvg').onclick=async ()=>{
   await Promise.all(need.map(async e=>{ fonts[e.font+'|'+e.weight]=await vecFont(e.font,e.weight); }));
   const missing=need.some(e=>!fonts[e.font+'|'+e.weight]);
   deliver(new Blob([buildSvg(fonts)],{type:'image/svg+xml'}),'vskk-10-let-cube.svg',
-    missing ? 'SVG saved. Some text kept as live text (only Galano Grotesque is outlined).' : 'SVG saved');
+    missing ? 'SVG saved. Some text kept as live text (only Galano and Montserrat are outlined).' : 'SVG saved');
 };
 
 /* ---------- loop ---------- */
@@ -461,5 +469,8 @@ function loop(){
 
 /* ---------- start ---------- */
 regenPaper(); renderChips(); syncEditor(); loop();
-Promise.all(['400','500','600'].map(w=>document.fonts.load(`${w} 100px "Galano Grotesque"`))).catch(()=>{}).then(()=>document.fonts.ready).then(()=>redraw());
+// Galano is only there locally; Montserrat is the fallback, so load both up front and
+// repaint whenever a face finishes loading (canvas never repaints on its own).
+document.fonts.addEventListener('loadingdone', ()=>redraw());
+Promise.allSettled(['300','400','500','600','800'].flatMap(w=>[`${w} 100px "Galano Grotesque"`, `${w} 100px "Montserrat"`].map(f=>document.fonts.load(f)))).then(()=>document.fonts.ready).then(()=>redraw());
 })();
