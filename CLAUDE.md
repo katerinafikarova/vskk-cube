@@ -37,13 +37,13 @@ Opening `index.html` via `file://` works, but browsers block the self-hosted Gal
 - **Paper** is procedural (`genPaper(i)`): seeded noise + low-frequency mottling + fibres + fold creases, with a matching bump map in `bumpC[i]`. Seeds are per face so faces differ but stay stable between reloads.
 - **Interaction**: pointer events raycast against the cube (`pick`) to get face + UV. A hit on an element starts a move (elements can cross onto other faces); otherwise the drag rotates the cube via world-axis quaternions.
 - **Grounding**: each frame `settle()` puts the shadow plane and contact shadow under the lowest cube corner so the cube always rests on the surface.
-- **SVG export** (`buildSvg`) projects the visible faces through the live camera and writes flat paths: face fill = paper colour, white strokes on edges shared by two visible faces, elements clipped per face. Points are projected one by one (Bézier control points included), so perspective matches the 3D view. Galano text becomes outlines via opentype.js (`VFONTS` maps family+weight to OTF); other fonts stay `<text>` with an affine transform; elements with `vec` (the VŠKK mark) are vector paths; uploaded images are embedded `<image>`s. No texture, grain or shadow.
+- **SVG export** (`buildSvg`) projects the visible faces through the live camera and writes flat paths: face fill = paper colour, white strokes on edges shared by two visible faces, elements clipped per face. Points are projected one by one (Bézier control points included), so perspective matches the 3D view. Galano and Montserrat text becomes outlines via opentype.js (`VFONTS` maps family+weight to font files; Galano falls back to the subset static Montserrat TTFs in `vendor/montserrat/`, OFL); other fonts stay `<text>` with an affine transform; elements with `vec` (the VŠKK mark) are vector paths; uploaded images are embedded `<image>`s. No texture, grain or shadow.
 - **Export** composites the background (gold gradient, uploaded photo with blur, or transparent) with the WebGL canvas at 2× and saves a PNG. Selection outlines are hidden during export.
 
 ## Conventions
 
 - Keep it dependency-free and static; any new library goes into `vendor/` pinned to an exact version.
-- UI copy is short, sentence case, in English. Brand colors: yellow `#f2b630`, paper black `#1e1e20`.
+- UI copy is short, sentence case, in English. Brand colors: VŠKK yellow `#fdc40a` (ink and swatch), UI accent yellow `#f2b630`, paper black `#1e1e20`.
 - After changes to `drawFace`, check both the selection outline and the export (outline must not appear in exports).
 - Keep mobile working: the layout stacks under 820px, and the canvas uses `touch-action: none`.
 
