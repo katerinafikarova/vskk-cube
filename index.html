@@ -471,12 +471,18 @@ const CONCEPTS = [
     c.save(); c.transform(dx/1000,-dy/1000,0,s/1000,s,0); c.translate(500,500); c.rotate(-Math.PI/2);
     txt(c,st.word,0,0,P.wsize*1000,P.font,col,'center','middle'); c.restore();
   }},
-{ id:'puvodni', name:'Původní kostka', src:'izometrická kostka z původního editoru', fit:[1.2,1.38], link:true,
+{ id:'puvodni', name:'Původní kostka', src:'izometrická kostka z původního editoru · táhni pro otočení', fit:[1.42,1.42], link:true, rotate:true,
   params:[
+    {k:'yaw',l:'Otočení',min:-180,max:180,step:1,v:-45,u:'°'},
+    {k:'pitch',l:'Náklon',min:-180,max:180,step:.5,v:35.3,u:'°'},
+    {k:'roll',l:'Klopení',min:-180,max:180,step:1,v:0,u:'°'},
     {k:'top',l:'Horní stěna',type:'select',v:'logo',o:FACE_OPTS},
-    {k:'topRot',l:'Natočení horní',type:'select',v:'90',o:[['0','0°'],['90','90°'],['180','180°'],['270','270°']]},
+    {k:'topRot',l:'Natočení horní',type:'select',v:'0',o:[['0','0°'],['90','90°'],['180','180°'],['270','270°']]},
     {k:'left',l:'Levá stěna',type:'select',v:'cislo',o:FACE_OPTS},
     {k:'right',l:'Pravá stěna',type:'select',v:'slovo',o:FACE_OPTS},
+    {k:'oppLeft',l:'Naproti levé',type:'select',v:'logo',o:FACE_OPTS},
+    {k:'oppRight',l:'Naproti pravé',type:'select',v:'cislolet',o:FACE_OPTS},
+    {k:'bottom',l:'Spodní stěna',type:'select',v:'roky',o:FACE_OPTS},
     {k:'caps',l:'Slovo verzálkami',type:'toggle',v:true},
     {k:'ncolor',l:'Barva čísla a slova',type:'select',v:'acc',o:COLOR_OPTS},
     {k:'fsize',l:'Velikost obsahu',min:.4,max:1.4,step:.01,v:1},
@@ -484,18 +490,34 @@ const CONCEPTS = [
     {k:'ew',l:'Tloušťka hran',min:.002,max:.03,step:.001,v:.006}
   ],
   draw(c,s,P,K){
-    const a=s*.62, cc=a*Math.cos(Math.PI/6);
-    c.fillStyle=K.sq;
-    poly(c,[[0,-a],[cc,-a/2],[cc,a/2],[0,a],[-cc,a/2],[-cc,-a/2]]); c.fill();
-    const face=(o,u,v,content,rot)=>{ c.save(); c.transform(u[0]/1000,u[1]/1000,v[0]/1000,v[1]/1000,o[0],o[1]); if(rot){ c.translate(500,500); c.rotate(rot*Math.PI/180); c.translate(-500,-500); } faceContent(c,content,1000,K,P); c.restore(); };
-    face([-cc,-a/2],[cc,-a/2],[cc,a/2],P.top,+P.topRot);
-    face([-cc,-a/2],[cc,a/2],[0,a],P.left,0);
-    face([0,0],[cc,-a/2],[0,a],P.right,0);
-    if(P.edges){
-      c.strokeStyle=K.let; c.lineWidth=P.ew*s; c.lineJoin='round'; c.lineCap='round';
-      poly(c,[[0,-a],[cc,-a/2],[cc,a/2],[0,a],[-cc,a/2],[-cc,-a/2]]); c.stroke();
-      c.beginPath(); c.moveTo(-cc,-a/2); c.lineTo(0,0); c.lineTo(cc,-a/2); c.moveTo(0,0); c.lineTo(0,a); c.stroke();
-    }
+    // Orthographic projection: every face stays a parallelogram, so its content is an exact affine map (vector in SVG too).
+    const h=s*.62/Math.sqrt(8/3), d2r=Math.PI/180;
+    const cy=Math.cos(P.yaw*d2r), sy=Math.sin(P.yaw*d2r), cp=Math.cos(P.pitch*d2r), sp=Math.sin(P.pitch*d2r), cr=Math.cos(P.roll*d2r), sr=Math.sin(P.roll*d2r);
+    const rot=v=>{ let [x,y,z]=v; [x,z]=[x*cy+z*sy, -x*sy+z*cy]; [y,z]=[y*cp-z*sp, y*sp+z*cp]; [x,y]=[x*cr-y*sr, x*sr+y*cr]; return [x,y,z]; };
+    const scr=v=>{ const q=rot(v); return [q[0],-q[1],q[2]]; };
+    const FACES=[
+      {n:[0,0,1],u:[1,0,0],v:[0,-1,0],k:'left'},
+      {n:[1,0,0],u:[0,0,-1],v:[0,-1,0],k:'right'},
+      {n:[0,1,0],u:[1,0,0],v:[0,0,1],k:'top',rot:+P.topRot},
+      {n:[0,0,-1],u:[-1,0,0],v:[0,-1,0],k:'oppLeft'},
+      {n:[-1,0,0],u:[0,0,1],v:[0,-1,0],k:'oppRight'},
+      {n:[0,-1,0],u:[1,0,0],v:[0,0,-1],k:'bottom'}
+    ];
+    const vis=[];
+    FACES.forEach(f=>{
+      const nz=rot(f.n)[2]; if(nz<=1e-6) return;
+      const o=[0,1,2].map(i=>(f.n[i]-f.u[i]-f.v[i])*h);
+      const O=scr(o), U=scr(f.u.map(x=>x*2*h)), V=scr(f.v.map(x=>x*2*h));
+      vis.push({f,O,U,V,pts:[[O[0],O[1]],[O[0]+U[0],O[1]+U[1]],[O[0]+U[0]+V[0],O[1]+U[1]+V[1]],[O[0]+V[0],O[1]+V[1]]]});
+    });
+    vis.forEach(F=>{
+      c.fillStyle=K.sq; poly(c,F.pts); c.fill();
+      c.save(); c.beginPath(); poly(c,F.pts); c.clip();
+      c.transform(F.U[0]/1000,F.U[1]/1000,F.V[0]/1000,F.V[1]/1000,F.O[0],F.O[1]);
+      if(F.f.rot){ c.translate(500,500); c.rotate(F.f.rot*d2r); c.translate(-500,-500); }
+      faceContent(c,P[F.f.k],1000,K,P); c.restore();
+    });
+    if(P.edges){ c.strokeStyle=K.let; c.lineWidth=P.ew*s; c.lineJoin='round'; c.lineCap='round'; vis.forEach(F=>{ poly(c,F.pts); c.stroke(); }); }
   }},
 { id:'lockup', name:'10 + logo + let', src:'str. 5', fit:[4.4,1.25],
   params:[
@@ -719,15 +741,21 @@ c2d.addEventListener('pointerdown',ev=>{
     if(CONCEPTS[i]){ st.overview=false; selectConcept(CONCEPTS[i].id); }
     return;
   }
-  c2d.setPointerCapture(ev.pointerId); drag={x:ev.clientX,y:ev.clientY}; c2d.classList.add('grabbing'); hideHint();
+  c2d.setPointerCapture(ev.pointerId); drag={x:ev.clientX,y:ev.clientY,rot:!!CMAP[st.concept].rotate && !ev.shiftKey}; c2d.classList.add('grabbing'); hideHint();
 });
-c2d.addEventListener('pointermove',ev=>{ if(!drag) return; st.pan.x+=(ev.clientX-drag.x)/curS; st.pan.y+=(ev.clientY-drag.y)/curS; drag={x:ev.clientX,y:ev.clientY}; draw(); });
+const wrap=a=>((a+180)%360+360)%360-180;
+c2d.addEventListener('pointermove',ev=>{ if(!drag) return; const dx=ev.clientX-drag.x, dy=ev.clientY-drag.y; drag.x=ev.clientX; drag.y=ev.clientY;
+  if(drag.rot){ const P=params[st.concept]; P.yaw=Math.round(wrap(P.yaw+dx*.5)*10)/10; P.pitch=Math.round(wrap(P.pitch+dy*.5)*10)/10; syncParam('yaw'); syncParam('pitch'); }
+  else { st.pan.x+=dx/curS; st.pan.y+=dy/curS; }
+  draw(); });
 const endPan=()=>{ if(drag){ drag=null; c2d.classList.remove('grabbing'); save(); } };
 c2d.addEventListener('pointerup',endPan); c2d.addEventListener('pointercancel',endPan);
-c2d.addEventListener('dblclick',()=>{ if(!st.overview){ st.pan={x:0,y:0}; st.zoom=1; draw(); save(); } });
+c2d.addEventListener('dblclick',()=>{ if(st.overview) return; st.pan={x:0,y:0}; st.zoom=1;
+  if(CMAP[st.concept].rotate){ const P=params[st.concept]; ['yaw','pitch','roll'].forEach(k=>{ P[k]=CMAP[st.concept].params.find(q=>q.k===k).v; syncParam(k); }); }
+  draw(); save(); });
 c2d.addEventListener('wheel',ev=>{ if(st.overview) return; ev.preventDefault(); st.zoom=Math.min(3,Math.max(.3,st.zoom*Math.exp(-ev.deltaY*.0015))); draw(); save(); },{passive:false});
 
-function setHint(){ $('hint').textContent = st.overview ? 'Klikni na koncept, který chceš upravit.' : 'Táhni pro posun kompozice, kolečkem přiblížíš, dvojklik vycentruje.'; $('hint').style.opacity='1'; }
+function setHint(){ $('hint').textContent = st.overview ? 'Klikni na koncept, který chceš upravit.' : CMAP[st.concept].rotate ? 'Táhni pro otočení kostky, se Shiftem ji posuneš. Dvojklik vrátí izometrii.' : 'Táhni pro posun kompozice, kolečkem přiblížíš, dvojklik vycentruje.'; $('hint').style.opacity='1'; }
 function hideHint(){ $('hint').style.opacity='0'; }
 
 /* ================= panel UI ================= */
@@ -746,12 +774,13 @@ function renderParams(){
     const lab=document.createElement('label'); lab.htmlFor=id; lab.textContent=p.l; row.appendChild(lab);
     if(p.type==='select'){ row.className='row two'; const s=document.createElement('select'); s.id=id; p.o.forEach(([val,t])=>{ const o=document.createElement('option'); o.value=val; o.textContent=t; s.appendChild(o); }); s.value=v; s.onchange=()=>setParam(p,s.value); row.appendChild(s); }
     else if(p.type==='toggle'){ row.className='row two'; const cb=document.createElement('input'); cb.type='checkbox'; cb.id=id; cb.checked=!!v; cb.onchange=()=>setParam(p,cb.checked); row.appendChild(cb); }
-    else { row.className='row'; const r=document.createElement('input'); r.type='range'; r.id=id; r.min=p.min; r.max=p.max; r.step=p.step; r.value=v; const o=document.createElement('output'); o.textContent=fmt(p,v); r.oninput=()=>{ o.textContent=fmt(p,+r.value); setParam(p,+r.value); }; row.appendChild(r); row.appendChild(o); }
+    else { row.className='row'; const r=document.createElement('input'); r.type='range'; r.id=id; r.min=p.min; r.max=p.max; r.step=p.step; r.value=v; const o=document.createElement('output'); o.id='o_'+p.k; o.textContent=fmt(p,v); r.oninput=()=>{ o.textContent=fmt(p,+r.value); setParam(p,+r.value); }; row.appendChild(r); row.appendChild(o); }
     box.appendChild(row);
   });
   if(def.link && ON_SITE){ const p=document.createElement('p'); p.className='btns'; p.innerHTML='<a class="btnlink" href="kostka.html">Otevřít editor původní kostky</a>'; box.appendChild(p);
     const n=document.createElement('p'); n.className='note'; n.textContent='V editoru jdou texty volně posouvat po stěnách a kostka má i 3D náhled. Má vlastní export SVG.'; box.appendChild(n); }
 }
+function syncParam(k){ const p=CMAP[st.concept].params.find(q=>q.k===k), el=$('p_'+k); if(p&&el){ el.value=params[st.concept][k]; const o=$('o_'+k); if(o) o.textContent=fmt(p,params[st.concept][k]); } }
 function setParam(p,v){ params[st.concept][p.k]=v; draw(); save(); }
 function selectConcept(id){ st.concept=id; st.pan={x:0,y:0}; st.zoom=1; renderConcepts(); renderParams(); setHint(); draw(); save(); }
 
