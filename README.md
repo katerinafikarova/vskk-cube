@@ -9,9 +9,9 @@ Interaktivní nástroj pro porovnání konceptů loga k 10. výročí VŠKK. Obs
 - Vyber koncept vpravo, nebo otevři **Přehled všech vedle sebe** a klikni na jeden z nich.
 - Táhnutím posuneš kompozici, kolečkem myši přiblížíš, dvojklikem vycentruješ.
 - Barevnost je omezená na žlutou, bílou a černou. Jsou připravené čtyři předvolby a role se dají přepínat jednotlivě.
-- **Galano Grotesque** je licencované písmo, takže ho do stránky nahraj ze svého počítače (Light, Regular, Bold). Ukládá se jen v prohlížeči a do repozitáře se nedostane. Bez něj se použije Outfit.
+- **Galano Grotesque** je v nástroji vestavěné pro číslice 0–9 a slovo let / LET (Regular, Medium, SemiBold), a to jako křivky, ne jako soubor písma. Pro jiné texty můžeš nahrát celé písmo ze svého počítače, jinak se použije Montserrat.
 - Originální logo VŠKK (SVG nebo PNG) a fotku pozadí můžeš nahrát stejně.
-- **Export** uloží SVG nebo PNG jednoho konceptu i celého přehledu, volitelně s průhledným pozadím. V SVG je logo vektorové a písmo převedené na křivky (Galano, pokud je nahrané, jinak Montserrat; ruční písmo Caveat). Fotky zůstávají jako vložené obrázky.
+- **Export** uloží SVG nebo PNG jednoho konceptu i celého přehledu, volitelně s průhledným pozadím. V SVG je logo vektorové a všechen text převedený na křivky (číslo a let / LET vždy v Galanu). Fotky zůstávají jako vložené obrázky.
 
 ## Lokálně
 
