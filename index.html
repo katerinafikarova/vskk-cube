@@ -9,11 +9,11 @@
 <link rel="icon" href="data:image/svg+xml,<svg xmlns=%22http://www.w3.org/2000/svg%22 viewBox=%220 0 100 100%22><rect x=%2215%22 y=%2215%22 width=%2270%22 height=%2270%22 fill=%22%23000%22/><text x=%2250%22 y=%2263%22 font-size=%2236%22 text-anchor=%22middle%22 fill=%22%23fdc40a%22 font-family=%22sans-serif%22 font-weight=%22800%22>10</text></svg>">
 <link rel="preconnect" href="https://fonts.googleapis.com">
 <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
-<link href="https://fonts.googleapis.com/css2?family=Archivo:wght@400;500;600;800&family=Outfit:wght@300;400;800&family=Caveat:wght@500&display=swap" rel="stylesheet">
+<link href="https://fonts.googleapis.com/css2?family=Archivo:wght@400;500;600;800&family=Montserrat:wght@300;400;800&family=Caveat:wght@400&display=swap" rel="stylesheet">
 <style>
 :root{
   --bg:#efeeec; --panel:#ffffff; --ink:#191919; --muted:#6a6a6a; --line:#dcdad6;
-  --field:#f5f4f2; --accent:#f2b630; --accent-ink:#191919; color-scheme:light;
+  --field:#f5f4f2; --accent:#fdc40a; --accent-ink:#191919; color-scheme:light;
   box-sizing:border-box; padding-top:env(safe-area-inset-top,0px); padding-bottom:env(safe-area-inset-bottom,0px);
 }
 @media (prefers-color-scheme:dark){
@@ -28,7 +28,6 @@ body{height:100%;margin:0;background:var(--bg);color:var(--ink);font:14px/1.45 "
 .stage canvas{position:absolute;inset:0;width:100%;height:100%;display:block;touch-action:none}
 #c2d{cursor:grab}
 #c2d.overview{cursor:pointer}
-#gl{cursor:grab;display:none}
 .grabbing{cursor:grabbing!important}
 .hint{position:absolute;left:16px;bottom:16px;max-width:min(440px,calc(100% - 32px));background:rgba(20,20,20,.72);color:#fff;padding:8px 12px;border-radius:10px;font-size:13px;backdrop-filter:blur(6px);pointer-events:none;transition:opacity .3s}
 .panel{background:var(--panel);border-left:1px solid var(--line);overflow-y:auto;padding:20px 20px 36px}
@@ -50,11 +49,12 @@ input[type=range]{width:100%;accent-color:var(--accent)}
 input[type=checkbox]{width:18px;height:18px;accent-color:var(--accent);margin:0}
 select,input[type=text]{width:100%;font:inherit;color:var(--ink);background:var(--field);border:1px solid var(--line);border-radius:8px;padding:6px 9px}
 .btns{display:flex;flex-wrap:wrap;gap:8px;margin:4px 0 12px}
-button{font:inherit;font-weight:500;color:var(--ink);background:var(--field);border:1px solid var(--line);border-radius:8px;padding:7px 12px;cursor:pointer}
-button:hover{border-color:var(--muted)}
+button,.btnlink{font:inherit;font-weight:500;color:var(--ink);background:var(--field);border:1px solid var(--line);border-radius:8px;padding:7px 12px;cursor:pointer;text-decoration:none;display:inline-block}
+button:hover,.btnlink:hover{border-color:var(--muted)}
 button.primary{background:var(--accent);color:var(--accent-ink);border-color:var(--accent);font-weight:600}
 button[aria-pressed=true]{background:var(--ink);color:var(--panel);border-color:var(--ink)}
-button:focus-visible,select:focus-visible,input:focus-visible{outline:2px solid var(--accent);outline-offset:2px}
+button:focus-visible,select:focus-visible,input:focus-visible,.btnlink:focus-visible{outline:2px solid var(--accent);outline-offset:2px}
+button:disabled{opacity:.55;cursor:progress}
 .swatches{display:flex;gap:6px}
 .sw{width:34px;height:28px;padding:0;border-radius:7px;border:1px solid var(--line);position:relative}
 .sw[aria-pressed=true]{outline:2px solid var(--accent);outline-offset:2px;background:inherit}
@@ -83,12 +83,11 @@ button:focus-visible,select:focus-visible,input:focus-visible{outline:2px solid 
 <div class="app">
   <div class="stage" id="stage">
     <canvas id="c2d" aria-label="Náhled konceptu"></canvas>
-    <canvas id="gl" aria-label="3D kostka, táhni pro otočení"></canvas>
     <div class="hint" id="hint"></div>
   </div>
 
   <aside class="panel">
-    <p class="brand"><b>VŠKK 10 let</b><span>testování konceptů · <a href="kostka.html" style="color:inherit">původní kostka</a></span></p>
+    <p class="brand"><b>VŠKK 10 let</b><span>testování konceptů</span></p>
 
     <section style="border-top:0;padding-top:0">
       <h2>Koncept</h2>
@@ -101,6 +100,14 @@ button:focus-visible,select:focus-visible,input:focus-visible{outline:2px solid 
       <p class="note" id="src"></p>
       <div id="params"></div>
       <div class="btns"><button id="center">Vycentrovat</button><button id="defaults">Výchozí nastavení</button></div>
+    </section>
+
+    <section>
+      <h2>Export</h2>
+      <div class="row two"><label for="transp">Průhledné pozadí</label><input type="checkbox" id="transp"></div>
+      <div class="btns"><button class="primary" id="exportSvg">SVG konceptu</button><button id="exportOne">PNG konceptu</button></div>
+      <div class="btns"><button id="exportAllSvg">SVG přehledu</button><button id="exportAll">PNG přehledu</button></div>
+      <p class="note" id="svgNote">V SVG je logo vektorové a písmo převedené na křivky (Galano, pokud je nahrané, jinak Montserrat). Fotky zůstávají jako vložené obrázky.</p>
     </section>
 
     <section>
@@ -122,11 +129,11 @@ button:focus-visible,select:focus-visible,input:focus-visible{outline:2px solid 
 
     <section>
       <h2>Písmo Galano a logo</h2>
-      <p class="note">Galano Grotesque je licencované písmo, takže ho nahraj ze svého počítače. Zůstane jen v tvém prohlížeči. Dokud ho nenahraješ, použije se podobný Outfit.</p>
+      <p class="note">Galano Grotesque je licencované písmo, takže ho nahraj ze svého počítače. Zůstane jen v tvém prohlížeči. Dokud ho nenahraješ, použije se Montserrat.</p>
       <div class="btns">
-        <span class="file"><button tabindex="-1">Galano Light</button><input type="file" accept=".otf,.ttf,.woff,.woff2" data-font="GalanoL" aria-label="Nahrát Galano Light"></span>
-        <span class="file"><button tabindex="-1">Galano Regular</button><input type="file" accept=".otf,.ttf,.woff,.woff2" data-font="GalanoR" aria-label="Nahrát Galano Regular"></span>
-        <span class="file"><button tabindex="-1">Galano Bold</button><input type="file" accept=".otf,.ttf,.woff,.woff2" data-font="GalanoB" aria-label="Nahrát Galano Bold"></span>
+        <span class="file"><button tabindex="-1">Galano Light</button><input type="file" accept=".otf,.ttf,.woff" data-font="GalanoL" aria-label="Nahrát Galano Light"></span>
+        <span class="file"><button tabindex="-1">Galano Regular</button><input type="file" accept=".otf,.ttf,.woff" data-font="GalanoR" aria-label="Nahrát Galano Regular"></span>
+        <span class="file"><button tabindex="-1">Galano Bold</button><input type="file" accept=".otf,.ttf,.woff" data-font="GalanoB" aria-label="Nahrát Galano Bold"></span>
       </div>
       <p class="status" id="fontStatus"></p>
       <p class="note">Vestavěné je oficiální logo VŠKK. Písmena se barví podle zvolené barevnosti. Nahrát můžeš i jinou verzi loga jako SVG nebo PNG čtverce.</p>
@@ -146,23 +153,18 @@ button:focus-visible,select:focus-visible,input:focus-visible{outline:2px solid 
       <div class="row"><label for="blur">Rozostření</label><input type="range" id="blur" min="0" max="16" step="0.5"><output id="oBlur"></output></div>
       <p class="note">Fotku používá i koncept Průhledné typo. Bez nahrané fotky se ukáže zástupná plocha ze žlutých origami tvarů.</p>
     </section>
-
-    <section>
-      <h2>Export</h2>
-      <div class="row two"><label for="transp">Průhledné pozadí</label><input type="checkbox" id="transp"></div>
-      <div class="btns"><button class="primary" id="exportOne">PNG konceptu</button><button id="exportAll">PNG přehledu</button></div>
-      <p class="note">Export má dvojnásobné rozlišení náhledu.</p>
-    </section>
   </aside>
 </div>
 <div class="toast" id="toast" role="status" aria-live="polite"></div>
 
-<script src="vendor/three.min.js"></script>
+<script src="vendor/opentype.min.js"></script>
 <script>
 (function(){
 const $ = id => document.getElementById(id);
-const stage=$('stage'), c2d=$('c2d'), gl=$('gl');
+const stage=$('stage'), c2d=$('c2d');
 const ctx=c2d.getContext('2d');
+const VENDOR='vendor/';
+const ON_SITE = /github\.io$|^localhost$|^127\.0\.0\.1$|^\[::1\]$/.test(location.hostname) || location.protocol==='file:';
 
 /* ================= state ================= */
 const PALETTE = () => ({ cerna:'#000000', bila:'#ffffff', zluta: validHex(st.yellow) ? st.yellow : '#fdc40a' });
@@ -184,7 +186,10 @@ const st = {
 };
 const images = { logo:null, photo:null, mark:null };
 const MARK_SRC = 'data:image/svg+xml;charset=utf-8,%3Csvg%20xmlns%3D%22http%3A//www.w3.org/2000/svg%22%20viewBox%3D%220%200%20460.9%20460.9%22%20width%3D%22460.9%22%20height%3D%22460.9%22%3E%3Cpath%20fill%3D%22%23ffffff%22%20d%3D%22M281.9%2C45.6H345V63h-63.1V45.6z%20M147.8%2C327.2l46.8%2C51.2h-24.7l-45.1-49.3v49.3h-20.1V276h20.1v49.2%20l45.1-49.2h24.7l-47%2C51.2H147.8z%20M158.9%2C188.3h-22.2L99.9%2C85.8h21.4l26.9%2C78.2L175%2C85.8h20.3L158.9%2C188.3z%20M354.3%2C378.4h-20.1%20v-49.3l-45.1%2C49.3h-24.7l46.8-51.2h0.2l-47-51.2h24.7l45.1%2C49.2V276h20.1V378.4z%20M347.2%2C179.6c-8.4%2C7.8-21.4%2C11-35.1%2C11%20c-11.7%2C0-24.1-2.9-33.2-10.5c-6.6-5.5-11.6-14.2-11.6-23.9H288c0%2C5.1%2C2.5%2C9.5%2C5.8%2C12.6c4.7%2C4.3%2C12.2%2C5.5%2C18.6%2C5.5%20c7.7%2C0%2C15-1.4%2C19.3-5.5c2.5-2.5%2C4.4-4.9%2C4.4-9.8c0-7.5-6.3-11-13.2-12.2c-7.5-1.3-17.2-1.6-24.6-2.7c-15.3-2.3-28.2-11.6-28.2-28.6%20c0-8.1%2C3.9-14.9%2C9.7-20.2c7.3-6.6%2C19.6-10.8%2C32.5-10.8c11.9%2C0%2C23.5%2C3.5%2C31%2C10c6.6%2C5.8%2C11.1%2C13.3%2C11.3%2C21.8H334%20c-0.2-3.6-2.2-7.5-4.9-10.1c-3.6-3.5-11-5.5-16.9-5.5c-6.3%2C0-13.5%2C1.3-18%2C5.6c-2.3%2C2.3-3.8%2C4.9-3.8%2C8.7c0%2C6.7%2C4.7%2C10.1%2C11.3%2C11.1%20c7%2C1%2C16.9%2C1.7%2C24.1%2C2.6c16.6%2C2.2%2C30.5%2C12.2%2C30.5%2C29.7C356.4%2C167.8%2C352.7%2C174.6%2C347.2%2C179.6z%22/%3E%3C/svg%3E';
-const fontsLoaded = {};
+const MARK_SVG = decodeURIComponent(MARK_SRC.split(',')[1]);
+const MARK_D = [...MARK_SVG.matchAll(/\sd="([^"]+)"/g)].map(m=>m[1]).join(' ');
+const MARK_W = parseFloat((/viewBox="[\d.\s-]*?([\d.]+)\s+[\d.]+"/.exec(MARK_SVG)||[0,460.9])[1]) || 460.9;
+const fontsLoaded = {}, galanoBuf = {};
 
 function validHex(h){ return /^#[0-9a-f]{6}$/i.test(h||''); }
 function C(){ const p=PALETTE(), r=st.roles; return { bg:p[r.bg], sq:p[r.sq], let:p[r.let], acc:p[r.acc] }; }
@@ -192,10 +197,10 @@ function rgba(hex,a){ const n=parseInt(hex.slice(1),16); return `rgba(${n>>16&25
 
 /* ================= text helpers ================= */
 function font(size,kind){
-  if(kind==='hand') return `500 ${size}px "Caveat", cursive`;
-  if(kind==='bold') return `800 ${size}px "GalanoB", "Outfit", sans-serif`;
-  if(kind==='light') return `300 ${size}px "GalanoL", "GalanoR", "Outfit", sans-serif`;
-  return `400 ${size}px "GalanoR", "Outfit", sans-serif`;
+  if(kind==='hand') return `400 ${size}px "Caveat", cursive`;
+  if(kind==='bold') return `800 ${size}px "GalanoB", "Montserrat", sans-serif`;
+  if(kind==='light') return `300 ${size}px "GalanoL", "GalanoR", "Montserrat", sans-serif`;
+  return `400 ${size}px "GalanoR", "Montserrat", sans-serif`;
 }
 const scratch=document.createElement('canvas').getContext('2d');
 const capCache={};
@@ -224,7 +229,6 @@ function hull(P){
 const near=(a,b)=>Math.abs(a[0]-b[0])<1e-6&&Math.abs(a[1]-b[1])<1e-6;
 function hullIndex(h,p){ return h.findIndex(q=>near(q,p)); }
 function isHullEdge(h,p,q){ const i=hullIndex(h,p), j=hullIndex(h,q); if(i<0||j<0) return false; const n=h.length; return (i+1)%n===j||(j+1)%n===i; }
-// edges of a box (front square F, back square B) that lie inside the silhouette
 function innerEdges(F,B,h){
   const e=[];
   for(let i=0;i<4;i++){ const a=F[i], b=F[(i+1)%4]; if(!isHullEdge(h,a,b)) e.push([a,b]); }
@@ -247,6 +251,7 @@ function tintedMark(col,px){
   return markCache[key]=t;
 }
 function drawLogoLetters(c,x,y,s,col){
+  if(c.isSvg && MARK_D){ c.svgPath(MARK_D,[s/MARK_W,0,0,s/MARK_W,x,y],col); return; }
   if(images.mark){ const m=c.getTransform(), k=Math.max(Math.hypot(m.a,m.b),Math.hypot(m.c,m.d)); c.drawImage(tintedMark(col,Math.max(8,Math.min(2048,Math.ceil(s*k)))),x,y,s,s); return; }
   const f=s*.22/capRatio('reg'), cap=s*.22;
   const c1=x+s*.31, c2=x+s*.68, r1=y+s*.40, r2=y+s*.81;
@@ -269,7 +274,7 @@ function cranesCanvas(){
   const W=1400,H=1000, cv=document.createElement('canvas'); cv.width=W; cv.height=H;
   const x=cv.getContext('2d'); let seed=7; const r=()=>{ seed=(seed*16807)%2147483647; return seed/2147483647; };
   x.fillStyle='#d99a17'; x.fillRect(0,0,W,H);
-  const shades=['#f2b630','#f7c94e','#e5a51f','#fbd66c','#d48f12','#f5bf3c'];
+  const shades=['#fdc40a','#f7c94e','#e5a51f','#fbd66c','#d48f12','#f5bf3c'];
   const items=[]; for(let i=0;i<900;i++) items.push({x:r()*W,y:r()*H,s:30+r()*70,a:r()*Math.PI*2});
   items.sort((a,b)=>a.y-b.y);
   for(const it of items){
@@ -284,6 +289,125 @@ function cranesCanvas(){
   return cranes=cv;
 }
 function photo(){ return images.photo || cranesCanvas(); }
+
+/* ================= SVG export context =================
+   Records the same Canvas 2D calls the concepts make and writes SVG.
+   Paths are stored in page coordinates, text becomes glyph outlines (opentype.js)
+   and the VŠKK mark is inserted as its original vector path. */
+const r2=n=>Math.round(n*100)/100, r5=n=>Math.round(n*1e5)/1e5;
+const esc=s=>String(s).replace(/&/g,'&amp;').replace(/</g,'&lt;').replace(/>/g,'&gt;').replace(/"/g,'&quot;');
+const matStr=m=>`matrix(${r5(m.a)} ${r5(m.b)} ${r5(m.c)} ${r5(m.d)} ${r2(m.e)} ${r2(m.f)})`;
+function parseColor(s){ s=String(s).trim(); const m=s.match(/^rgba?\(([^)]+)\)$/i); if(m){ const p=m[1].split(',').map(v=>parseFloat(v)); return {c:`rgb(${p[0]|0},${p[1]|0},${p[2]|0})`, a:p.length>3?p[3]:1}; } return {c:s,a:1}; }
+const hrefCache=new WeakMap();
+function imgHref(img){
+  if(hrefCache.has(img)) return hrefCache.get(img);
+  let h;
+  if(img instanceof HTMLImageElement && /^data:/.test(img.src)) h=img.src;
+  else { const cv=document.createElement('canvas'); cv.width=img.naturalWidth||img.width; cv.height=img.naturalHeight||img.height; cv.getContext('2d').drawImage(img,0,0); h=img===cranes?cv.toDataURL('image/jpeg',.85):cv.toDataURL('image/png'); }
+  hrefCache.set(img,h); return h;
+}
+function ser(n){ const at=Object.entries(n.attrs||{}).map(([k,v])=>` ${k}="${esc(v)}"`).join(''); if(n.children) return `<${n.tag}${at}>${n.children.map(ser).join('')}</${n.tag}>`; if(n.text!=null) return `<${n.tag}${at}>${esc(n.text)}</${n.tag}>`; return `<${n.tag}${at}/>`; }
+class SvgCtx{
+  constructor(W,H){ this.isSvg=true; this.W=W; this.H=H; this.defs=[]; this.root={tag:'g',attrs:{},children:[]}; this.cur=this.root; this.n=0; this.stack=[]; this.d='';
+    this.s={m:new DOMMatrix(),fillStyle:'#000',strokeStyle:'#000',lineWidth:1,lineJoin:'miter',lineCap:'butt',font:'10px sans-serif',textAlign:'start',textBaseline:'alphabetic',letterSpacing:'0px',globalAlpha:1,filter:'none',globalCompositeOperation:'source-over'}; }
+  save(){ this.stack.push({s:{...this.s,m:DOMMatrix.fromMatrix(this.s.m)},cur:this.cur}); }
+  restore(){ const t=this.stack.pop(); if(t){ this.s=t.s; this.cur=t.cur; } }
+  translate(x,y){ this.s.m=this.s.m.translate(x,y); }
+  rotate(a){ this.s.m=this.s.m.rotate(a*180/Math.PI); }
+  scale(x,y){ this.s.m=this.s.m.scale(x,y===undefined?x:y); }
+  transform(a,b,c,d,e,f){ this.s.m=this.s.m.multiply(new DOMMatrix([a,b,c,d,e,f])); }
+  setTransform(a,b,c,d,e,f){ this.s.m=(typeof a==='object')?DOMMatrix.fromMatrix(a):new DOMMatrix([a,b,c,d,e,f]); }
+  resetTransform(){ this.s.m=new DOMMatrix(); }
+  getTransform(){ return DOMMatrix.fromMatrix(this.s.m); }
+  _p(x,y){ const p=this.s.m.transformPoint(new DOMPoint(x,y)); return r2(p.x)+' '+r2(p.y); }
+  _k(){ const m=this.s.m; return Math.sqrt(Math.abs(m.a*m.d-m.b*m.c))||1; }
+  beginPath(){ this.d=''; }
+  moveTo(x,y){ this.d+='M'+this._p(x,y); }
+  lineTo(x,y){ this.d+=(this.d?'L':'M')+this._p(x,y); }
+  bezierCurveTo(a,b,c,d,x,y){ this.d+='C'+this._p(a,b)+' '+this._p(c,d)+' '+this._p(x,y); }
+  quadraticCurveTo(a,b,x,y){ this.d+='Q'+this._p(a,b)+' '+this._p(x,y); }
+  closePath(){ this.d+='Z'; }
+  rect(x,y,w,h){ this.moveTo(x,y); this.lineTo(x+w,y); this.lineTo(x+w,y+h); this.lineTo(x,y+h); this.closePath(); }
+  arc(x,y,r,a0,a1,ccw){
+    const TAU=2*Math.PI; let da=ccw?a0-a1:a1-a0; if(da>=TAU) da=TAU; else { da%=TAU; if(da<0) da+=TAU; } if(ccw) da=-da;
+    this.d+=(this.d?'L':'M')+this._p(x+r*Math.cos(a0),y+r*Math.sin(a0));
+    const n=Math.max(1,Math.ceil(Math.abs(da)/(Math.PI/2))), t=da/n, k=4/3*Math.tan(t/4);
+    for(let i=0;i<n;i++){ const s=a0+i*t, e=s+t; this.bezierCurveTo(x+r*(Math.cos(s)-k*Math.sin(s)),y+r*(Math.sin(s)+k*Math.cos(s)),x+r*(Math.cos(e)+k*Math.sin(e)),y+r*(Math.sin(e)-k*Math.cos(e)),x+r*Math.cos(e),y+r*Math.sin(e)); }
+  }
+  _paint(style,attrs,key,local){
+    if(style && typeof style==='object' && style._grad){
+      const id='g'+(++this.n), g=style, tr=local?'':` gradientTransform="${matStr(this.s.m)}"`;
+      const stops=g.stops.map(([o,c])=>{ const p=parseColor(c); return `<stop offset="${r5(o)}" stop-color="${p.c}"${p.a<1?` stop-opacity="${r5(p.a)}"`:''}/>`; }).join('');
+      this.defs.push(g.type==='linear'
+        ? `<linearGradient id="${id}" gradientUnits="userSpaceOnUse" x1="${r2(g.x0)}" y1="${r2(g.y0)}" x2="${r2(g.x1)}" y2="${r2(g.y1)}"${tr}>${stops}</linearGradient>`
+        : `<radialGradient id="${id}" gradientUnits="userSpaceOnUse" fx="${r2(g.x0)}" fy="${r2(g.y0)}" cx="${r2(g.x1)}" cy="${r2(g.y1)}" r="${r2(g.r1)}"${tr}>${stops}</radialGradient>`);
+      attrs[key]=`url(#${id})`;
+    } else { const p=parseColor(style); attrs[key]=p.c; if(p.a<1) attrs[key+'-opacity']=r5(p.a); }
+  }
+  _common(attrs,local){
+    if(this.s.globalAlpha<1) attrs.opacity=r5(this.s.globalAlpha);
+    const b=/blur\(\s*([\d.]+)px\s*\)/.exec(this.s.filter||'');
+    if(b && +b[1]>0){ const id='f'+(++this.n), sd=+b[1]/(local?this._k():1); this.defs.push(`<filter id="${id}" x="-50%" y="-50%" width="200%" height="200%"><feGaussianBlur stdDeviation="${r2(sd)}"/></filter>`); attrs.filter=`url(#${id})`; }
+    return attrs;
+  }
+  _push(tag,attrs,text){ this.cur.children.push({tag,attrs,text}); }
+  fill(rule){ if(!this.d) return; const a={d:this.d}; this._paint(this.s.fillStyle,a,'fill',false); if(rule==='evenodd') a['fill-rule']='evenodd'; this._push('path',this._common(a,false)); }
+  stroke(){ if(!this.d) return; const a={d:this.d,fill:'none'}; this._paint(this.s.strokeStyle,a,'stroke',false); a['stroke-width']=r2(this.s.lineWidth*this._k()); if(this.s.lineJoin!=='miter') a['stroke-linejoin']=this.s.lineJoin; if(this.s.lineCap!=='butt') a['stroke-linecap']=this.s.lineCap; this._push('path',this._common(a,false)); }
+  fillRect(x,y,w,h){ const d=this.d; this.beginPath(); this.rect(x,y,w,h); this.fill(); this.d=d; }
+  strokeRect(x,y,w,h){ const d=this.d; this.beginPath(); this.rect(x,y,w,h); this.stroke(); this.d=d; }
+  clearRect(){}
+  _group(clipInner){ const id='c'+(++this.n); this.defs.push(`<clipPath id="${id}">${clipInner}</clipPath>`); const g={tag:'g',attrs:{'clip-path':`url(#${id})`},children:[]}; this.cur.children.push(g); this.cur=g; }
+  clip(rule){ this._group(`<path d="${this.d||'M0 0'}"${rule==='evenodd'?' clip-rule="evenodd"':''}/>`); }
+  createLinearGradient(x0,y0,x1,y1){ return {_grad:true,type:'linear',x0,y0,x1,y1,stops:[],addColorStop(o,c){ this.stops.push([o,c]); }}; }
+  createRadialGradient(x0,y0,r0,x1,y1,r1){ return {_grad:true,type:'radial',x0,y0,r0,x1,y1,r1,stops:[],addColorStop(o,c){ this.stops.push([o,c]); }}; }
+  drawImage(img,x,y,w,h){ if(w===undefined){ w=img.naturalWidth||img.width; h=img.naturalHeight||img.height; } this._push('image',this._common({'xlink:href':imgHref(img),x:r2(x),y:r2(y),width:r2(w),height:r2(h),preserveAspectRatio:'none',transform:matStr(this.s.m)},true)); }
+  measureText(t){ scratch.font=this.s.font; setSpacing(scratch,parseFloat(this.s.letterSpacing)||0); const m=scratch.measureText(t); setSpacing(scratch,0); return m; }
+  _textEl(t,x,y){
+    const f=this.s.font, size=parseFloat((/([\d.]+)px/.exec(f)||[0,10])[1]), wt=parseInt((/^\s*(\d{3})\b/.exec(f)||[0,400])[1]);
+    const kind=/Caveat/.test(f)?'hand':wt>=700?'bold':wt<=300?'light':'reg', sp=parseFloat(this.s.letterSpacing)||0, m=this.measureText(t), al=this.s.textAlign;
+    const ox=al==='center'?-m.width/2:(al==='right'||al==='end')?-m.width:0;
+    const asc=m.emHeightAscent ?? m.fontBoundingBoxAscent ?? size*.8, desc=m.emHeightDescent ?? m.fontBoundingBoxDescent ?? size*.2, bl=this.s.textBaseline;
+    const oy=bl==='middle'?(asc-desc)/2:bl==='top'?asc:bl==='hanging'?asc*.8:(bl==='bottom'||bl==='ideographic')?-desc:0;
+    const ot=otFor(kind);
+    if(ot){ const p=ot.getPath(t,x+ox,y+oy,size,{kerning:true,letterSpacing:sp/size}); return {tag:'path',attrs:{d:p.toPathData(2)||'M0 0',transform:matStr(this.s.m)}}; }
+    const a={x:r2(x+ox),y:r2(y+oy),'font-family':kind==='hand'?'Caveat, cursive':"'Galano Grotesque', Montserrat, sans-serif",'font-size':r2(size),'font-weight':wt,transform:matStr(this.s.m)};
+    if(sp) a['letter-spacing']=r2(sp);
+    this.usedLiveText=true; return {tag:'text',attrs:a,text:t};
+  }
+  fillText(t,x,y){ const el=this._textEl(t,x,y); this._paint(this.s.fillStyle,el.attrs,'fill',true); this._common(el.attrs,true); this.cur.children.push(el); }
+  clipText(t,x,y){ this._group(ser(this._textEl(t,x,y))); }
+  svgPath(d,local,fill){ const a={d,transform:matStr(this.s.m.multiply(new DOMMatrix(local)))}; const p=parseColor(fill); a.fill=p.c; if(p.a<1) a['fill-opacity']=r5(p.a); this._push('path',this._common(a,true)); }
+  toString(){ return `<?xml version="1.0" encoding="UTF-8"?>\n<svg xmlns="http://www.w3.org/2000/svg" xmlns:xlink="http://www.w3.org/1999/xlink" width="${r2(this.W)}" height="${r2(this.H)}" viewBox="0 0 ${r2(this.W)} ${r2(this.H)}">\n<defs>${this.defs.join('')}</defs>\n${this.root.children.map(ser).join('\n')}\n</svg>\n`; }
+}
+['fillStyle','strokeStyle','lineWidth','lineJoin','lineCap','font','textAlign','textBaseline','letterSpacing','globalAlpha','filter','globalCompositeOperation'].forEach(p=>Object.defineProperty(SvgCtx.prototype,p,{get(){ return this.s[p]; },set(v){ this.s[p]=v; }}));
+
+/* outline fonts for SVG */
+const OTF={}, otPromises={}, otGalano={};
+function otLoad(key,url){ if(!window.opentype) return Promise.resolve(null); return otPromises[key] || (otPromises[key]=fetch(url).then(r=>{ if(!r.ok) throw 0; return r.arrayBuffer(); }).then(b=>opentype.parse(b)).catch(()=>null)); }
+async function ensureOutlines(){
+  if(!window.opentype || !ON_SITE) return;
+  const files={light:'montserrat/Montserrat-300.ttf',reg:'montserrat/Montserrat-400.ttf',bold:'montserrat/Montserrat-800.ttf',hand:'caveat/Caveat-Regular.ttf'};
+  await Promise.all(Object.entries(files).map(async([k,f])=>{ OTF[k]=await otLoad(k,VENDOR+f); }));
+}
+function otG(fam){ if(!galanoBuf[fam]||!window.opentype) return null; if(otGalano[fam]===undefined){ try{ otGalano[fam]=opentype.parse(galanoBuf[fam].slice(0)); }catch(_){ otGalano[fam]=null; } } return otGalano[fam]; }
+function otFor(kind){
+  if(kind==='hand') return OTF.hand||null;
+  if(kind==='bold') return otG('GalanoB')||OTF.bold||null;
+  if(kind==='light') return otG('GalanoL')||otG('GalanoR')||OTF.light||null;
+  return otG('GalanoR')||OTF.reg||null;
+}
+
+/* ================= face content (isometric cube) ================= */
+const FACE_OPTS=[['logo','Logo VŠKK'],['cislo','Číslo'],['slovo','Slovo'],['cislolet','Číslo + slovo'],['rucne','Číslo ručně'],['roky','Letopočty'],['prazdna','Prázdná']];
+function faceContent(c,content,S,K,P){
+  const col=K[P.ncolor], z=P.fsize, word=P.caps?st.word.toUpperCase():st.word;
+  if(content==='logo') logoOn(c,0,0,S,K.let);
+  else if(content==='cislo'){ const f=S*.46*z/capRatio('bold'); txt(c,st.num,S/2,S/2+S*.23*z,f,'bold',col,'center'); }
+  else if(content==='slovo'){ const f=S*.3*z/capRatio('bold'); txt(c,word,S/2,S/2+S*.15*z,f,'bold',col,'center'); }
+  else if(content==='cislolet'){ const f=S*.34*z/capRatio('bold'), f2=S*.15*z/capRatio('light'); txt(c,st.num,S/2,S*.55,f,'bold',col,'center'); txt(c,word,S/2,S*.82,f2,'light',K.let,'center'); }
+  else if(content==='rucne'){ c.save(); c.translate(S/2,S/2); c.rotate(-.12); txt(c,st.num,0,0,S*.75*z,'hand',K.let,'center','middle'); c.restore(); }
+  else if(content==='roky'){ const q=S*.075; txt(c,st.y1,S*.07,S*.07+q*.8,q,'bold',K.let,'left'); txt(c,st.y2,S*.93,S*.93,q,'bold',K.let,'right'); }
+}
 
 /* ================= concepts ================= */
 const CONCEPTS = [
@@ -318,10 +442,10 @@ const CONCEPTS = [
   ],
   draw(c,s,P,K){
     const o=P.off*s, sw=P.sw*s, T=s+o; c.translate(-T/2,-T/2);
-    const outline=()=>{ c.strokeStyle=P.front?K.let:K.sq; c.lineWidth=sw; c.strokeRect(o+sw/2,o+sw/2,s-sw,s-sw); };
-    if(!P.front) outline();
+    const outline=col=>{ c.strokeStyle=col; c.lineWidth=sw; c.strokeRect(o+sw/2,o+sw/2,s-sw,s-sw); };
+    if(!P.front) outline(K.sq);
     drawLogo(c,0,0,s,K.sq,K.let);
-    if(P.front){ c.save(); c.beginPath(); c.rect(0,0,s,s); c.clip(); outline(); c.restore(); c.save(); c.beginPath(); c.rect(-1e4,-1e4,2e4,2e4); c.rect(0,0,s,s); c.clip('evenodd'); c.strokeStyle=K.sq; c.lineWidth=sw; c.strokeRect(o+sw/2,o+sw/2,s-sw,s-sw); c.restore(); }
+    if(P.front){ c.save(); c.beginPath(); c.rect(0,0,s,s); c.clip(); outline(K.let); c.restore(); c.save(); c.beginPath(); c.rect(-1e4,-1e4,2e4,2e4); c.rect(0,0,s,s); c.clip('evenodd'); outline(K.sq); c.restore(); }
     if(P.tag) txt(c,`${st.num} ${st.word}`, o+s-sw-s*.05, o+s-sw-s*.05, s*.085,'reg',K.sq,'right');
   }},
 { id:'rucne', name:'Kostka s ručním písmem', src:'str. 3, vpravo', fit:[1.5,1.5],
@@ -347,17 +471,33 @@ const CONCEPTS = [
     c.save(); c.transform(dx/1000,-dy/1000,0,s/1000,s,0); c.translate(500,500); c.rotate(-Math.PI/2);
     txt(c,st.word,0,0,P.wsize*1000,P.font,col,'center','middle'); c.restore();
   }},
-{ id:'kostka3d', name:'3D papírová kostka', src:'původní prototyp', fit:[1,1], three:true,
+{ id:'puvodni', name:'Původní kostka', src:'izometrická kostka z původního editoru', fit:[1.2,1.38], link:true,
   params:[
-    {k:'left',l:'Levá stěna',type:'select',v:'logo',o:[]},
-    {k:'right',l:'Pravá stěna',type:'select',v:'cislolet',o:[]},
-    {k:'top',l:'Horní stěna',type:'select',v:'rucne',o:[]},
-    {k:'crease',l:'Přehyby',min:0,max:1,step:.05,v:.45},
-    {k:'light',l:'Úhel světla',min:-180,max:180,step:1,v:-30,u:'°'},
-    {k:'shadow',l:'Stín',min:0,max:1,step:.05,v:.55},
-    {k:'zoom',l:'Vzdálenost',min:3.2,max:10,step:.05,v:6.4}
-  ]},
-{ id:'lockup', name:'10 ■ let', src:'str. 5', fit:[4.4,1.25],
+    {k:'top',l:'Horní stěna',type:'select',v:'logo',o:FACE_OPTS},
+    {k:'topRot',l:'Natočení horní',type:'select',v:'90',o:[['0','0°'],['90','90°'],['180','180°'],['270','270°']]},
+    {k:'left',l:'Levá stěna',type:'select',v:'cislo',o:FACE_OPTS},
+    {k:'right',l:'Pravá stěna',type:'select',v:'slovo',o:FACE_OPTS},
+    {k:'caps',l:'Slovo verzálkami',type:'toggle',v:true},
+    {k:'ncolor',l:'Barva čísla a slova',type:'select',v:'acc',o:COLOR_OPTS},
+    {k:'fsize',l:'Velikost obsahu',min:.4,max:1.4,step:.01,v:1},
+    {k:'edges',l:'Hrany',type:'toggle',v:true},
+    {k:'ew',l:'Tloušťka hran',min:.002,max:.03,step:.001,v:.006}
+  ],
+  draw(c,s,P,K){
+    const a=s*.62, cc=a*Math.cos(Math.PI/6);
+    c.fillStyle=K.sq;
+    poly(c,[[0,-a],[cc,-a/2],[cc,a/2],[0,a],[-cc,a/2],[-cc,-a/2]]); c.fill();
+    const face=(o,u,v,content,rot)=>{ c.save(); c.transform(u[0]/1000,u[1]/1000,v[0]/1000,v[1]/1000,o[0],o[1]); if(rot){ c.translate(500,500); c.rotate(rot*Math.PI/180); c.translate(-500,-500); } faceContent(c,content,1000,K,P); c.restore(); };
+    face([-cc,-a/2],[cc,-a/2],[cc,a/2],P.top,+P.topRot);
+    face([-cc,-a/2],[cc,a/2],[0,a],P.left,0);
+    face([0,0],[cc,-a/2],[0,a],P.right,0);
+    if(P.edges){
+      c.strokeStyle=K.let; c.lineWidth=P.ew*s; c.lineJoin='round'; c.lineCap='round';
+      poly(c,[[0,-a],[cc,-a/2],[cc,a/2],[0,a],[-cc,a/2],[-cc,-a/2]]); c.stroke();
+      c.beginPath(); c.moveTo(-cc,-a/2); c.lineTo(0,0); c.lineTo(cc,-a/2); c.moveTo(0,0); c.lineTo(0,a); c.stroke();
+    }
+  }},
+{ id:'lockup', name:'10 + logo + let', src:'str. 5', fit:[4.4,1.25],
   params:[
     {k:'cap',l:'Výška písma',min:.5,max:1.5,step:.01,v:1},
     {k:'gap',l:'Mezera',min:0,max:.6,step:.01,v:.2},
@@ -434,6 +574,12 @@ const CONCEPTS = [
     if(P.mode==='foto'){
       c.save(); c.beginPath(); c.rect(0,0,s,s); c.clip(); drawCover(c,img,0,0,s,s);
       const w=tw(c,st.num,f,'bold',tr)-tr; txt(c,st.num,nx-w/2,ny,f,'bold',K.let,'left','alphabetic',tr); c.restore(); yc=K.let;
+    } else if(c.isSvg){
+      c.fillStyle=K.let; c.fillRect(0,0,s,s);
+      const w=tw(c,st.num,f,'bold',tr)-tr;
+      c.save(); c.beginPath(); c.rect(0,0,s,s); c.clip();
+      c.font=font(f,'bold'); c.textAlign='left'; c.textBaseline='alphabetic'; setSpacing(c,tr);
+      c.clipText(st.num,nx-w/2,ny); setSpacing(c,0); drawCover(c,img,0,0,s,s); c.restore(); yc=K.sq;
     } else {
       c.fillStyle=K.let; c.fillRect(0,0,s,s);
       const m=c.getTransform(), k=Math.hypot(m.a,m.b), n=Math.max(2,Math.ceil(s*k));
@@ -506,8 +652,6 @@ const CONCEPTS = [
     drawLogo(c,cw+g2+2*R+g,-s,s,K.sq,K.let);
   }}
 ];
-const FACE_OPTS=[['logo','Logo VŠKK'],['cislolet','Číslo + slovo'],['cislo','Číslo'],['rucne','Číslo ručně'],['let','Slovo'],['roky','Letopočty'],['prazdna','Prázdná']];
-CONCEPTS.find(x=>x.id==='kostka3d').params.slice(0,3).forEach(p=>p.o=FACE_OPTS);
 const CMAP=Object.fromEntries(CONCEPTS.map(x=>[x.id,x]));
 const params={};
 function defaults(id){ params[id]={}; CMAP[id].params.forEach(p=>params[id][p.k]=p.v); }
@@ -526,13 +670,11 @@ function load(){
 function storeAsset(key,dataUrl){ try{ if(dataUrl.length<3.5e6) localStorage.setItem(key,dataUrl); }catch(_){ toast('Soubor je moc velký na zapamatování, při příští návštěvě ho nahraj znovu.'); } }
 function readAsset(key){ try{ return localStorage.getItem(key); }catch(_){ return null; } }
 
-/* ================= canvas sizing & painting ================= */
+/* ================= painting ================= */
 let W=0,H=0,DPR=1,curS=1;
 function resize(){
   W=stage.clientWidth; H=stage.clientHeight; DPR=Math.min(devicePixelRatio||1,2);
-  c2d.width=Math.round(W*DPR); c2d.height=Math.round(H*DPR);
-  if(T3){ T3.renderer.setPixelRatio(DPR); T3.renderer.setSize(W,H,false); T3.camera.aspect=W/H; T3.camera.updateProjectionMatrix(); }
-  draw();
+  c2d.width=Math.round(W*DPR); c2d.height=Math.round(H*DPR); draw();
 }
 function paintBg(c,x,y,w,h){
   const K=C();
@@ -541,129 +683,32 @@ function paintBg(c,x,y,w,h){
     if(st.blur>0) c.filter=`blur(${st.blur}px)`; const p=st.blur*2.5; drawCover(c,photo(),x-p,y-p,w+2*p,h+2*p); c.restore();
   } else { c.fillStyle=K.bg; c.fillRect(x,y,w,h); }
 }
-function sizeFor(def,w,h,k){ return Math.min(w/def.fit[0], h/def.fit[1])*k; }
 function paintConcept(c,x,y,w,h,id,opts){
   opts=opts||{}; const def=CMAP[id];
   if(opts.bg!==false) paintBg(c,x,y,w,h);
-  if(def.three){ if(opts.withThree){ render3DInto(c,x,y,w,h); } return; }
-  const s=sizeFor(def,w,h,opts.k||.78)*(opts.zoom||1), pan=opts.pan||{x:0,y:0};
+  const s=Math.min(w/def.fit[0], h/def.fit[1])*(opts.k||.78)*(opts.zoom||1), pan=opts.pan||{x:0,y:0};
   c.save(); c.beginPath(); c.rect(x,y,w,h); c.clip();
   c.translate(x+w/2+pan.x*s, y+h/2+pan.y*s); def.draw(c,s,params[id],C()); c.restore();
   return s;
 }
-function overviewLayout(w,h){
-  const n=CONCEPTS.length, cols=w>=1100?4:w>=620?3:2, rows=Math.ceil(n/cols);
-  return { cols, rows, cw:w/cols, ch:h/rows };
-}
+function overviewLayout(w,h){ const n=CONCEPTS.length, cols=w>=1100?4:w>=620?3:2, rows=Math.ceil(n/cols); return { cols, rows, cw:w/cols, ch:h/rows }; }
 function paintOverview(c,w,h,opts){
   const L=overviewLayout(w,h), K=C(), labelCol = K.bg==='#000000' ? 'rgba(255,255,255,.7)' : 'rgba(0,0,0,.6)';
   if(opts.bg!==false) paintBg(c,0,0,w,h);
   CONCEPTS.forEach((def,i)=>{
     const x=(i%L.cols)*L.cw, y=Math.floor(i/L.cols)*L.ch, lab=Math.min(28,L.ch*.16);
-    paintConcept(c,x+6,y+lab,L.cw-12,L.ch-lab-6,def.id,{bg:false,k:.74,withThree:true});
+    paintConcept(c,x+6,y+lab,L.cw-12,L.ch-lab-6,def.id,{bg:false,k:.74});
     c.font=`500 ${Math.max(10,Math.min(13,L.cw/22))}px "Archivo", sans-serif`; c.fillStyle=labelCol; c.textAlign='left'; c.textBaseline='top';
     c.fillText(`${String(i+1).padStart(2,'0')}  ${def.name}`, x+12, y+8);
-    c.strokeStyle=labelCol; c.globalAlpha=.25; c.lineWidth=1; c.strokeRect(x+.5,y+.5,L.cw-1,L.ch-1); c.globalAlpha=1;
+    c.save(); c.globalAlpha=.25; c.strokeStyle=labelCol; c.lineWidth=1; c.strokeRect(x+.5,y+.5,L.cw-1,L.ch-1); c.restore();
   });
 }
 function draw(){
   if(!W) return;
   ctx.setTransform(DPR,0,0,DPR,0,0); ctx.clearRect(0,0,W,H);
-  const is3D=CMAP[st.concept].three && !st.overview;
-  gl.style.display=is3D?'block':'none';
   c2d.classList.toggle('overview',st.overview);
-  if(st.overview){ paintOverview(ctx,W,H,{}); }
-  else { const s=paintConcept(ctx,0,0,W,H,st.concept,{zoom:st.zoom,pan:st.pan}); if(s) curS=s; }
-  if(is3D) ensure3D();
-}
-
-/* ================= 3D paper cube ================= */
-let T3=null;
-function rng(seed){ return function(){ seed|=0; seed=seed+0x6D2B79F5|0; let t=Math.imul(seed^seed>>>15,1|seed); t=t+Math.imul(t^t>>>7,61|t)^t; return ((t^t>>>14)>>>0)/4294967296; }; }
-const S3=1024;
-function mk(n){ const c=document.createElement('canvas'); c.width=c.height=n||S3; return c; }
-function ensure3D(){
-  if(T3 || !window.THREE) return T3;
-  const renderer=new THREE.WebGLRenderer({canvas:gl,antialias:true,alpha:true,preserveDrawingBuffer:true});
-  renderer.setPixelRatio(DPR); renderer.setSize(W,H,false);
-  renderer.outputEncoding=THREE.sRGBEncoding; renderer.toneMapping=THREE.ACESFilmicToneMapping; renderer.toneMappingExposure=1.05;
-  renderer.shadowMap.enabled=true; renderer.shadowMap.type=THREE.PCFSoftShadowMap; renderer.setClearColor(0,0);
-  const scene=new THREE.Scene(), camera=new THREE.PerspectiveCamera(30,W/H,.1,100);
-  scene.add(new THREE.HemisphereLight(0xfff4dc,0xe0a21c,.75)); scene.add(new THREE.AmbientLight(0xffffff,.12));
-  const sun=new THREE.DirectionalLight(0xfff0d0,1.5); sun.castShadow=true; sun.shadow.mapSize.set(2048,2048);
-  Object.assign(sun.shadow.camera,{left:-3,right:3,top:3,bottom:-3,near:.5,far:20}); sun.shadow.bias=-.0005;
-  scene.add(sun); scene.add(sun.target);
-  const rim=new THREE.DirectionalLight(0xffd36a,.45); scene.add(rim);
-  const grain=mk(); { const x=grain.getContext('2d'), im=x.createImageData(S3,S3), d=im.data, r=rng(9); for(let i=0;i<d.length;i+=4){ const v=222+r()*33; d[i]=d[i+1]=d[i+2]=v; d[i+3]=255; } x.putImageData(im,0,0); }
-  const paperC=[],bumpC=[],faceC=[]; for(let i=0;i<6;i++){ paperC.push(mk()); bumpC.push(mk()); faceC.push(mk()); }
-  const aniso=renderer.capabilities.getMaxAnisotropy();
-  const maps=faceC.map(c=>{ const t=new THREE.CanvasTexture(c); t.encoding=THREE.sRGBEncoding; t.anisotropy=aniso; return t; });
-  const bumps=bumpC.map(c=>{ const t=new THREE.CanvasTexture(c); t.anisotropy=aniso; return t; });
-  const mats=maps.map((m,i)=>new THREE.MeshStandardMaterial({map:m,bumpMap:bumps[i],bumpScale:.012,roughness:.88,metalness:0}));
-  const SIZE=1.6, cube=new THREE.Mesh(new THREE.BoxGeometry(SIZE,SIZE,SIZE),mats); cube.castShadow=true; scene.add(cube);
-  cube.quaternion.setFromEuler(new THREE.Euler(.12,.62,0,'XYZ'));
-  const ground=new THREE.Mesh(new THREE.PlaneGeometry(30,30),new THREE.ShadowMaterial({opacity:.55})); ground.rotation.x=-Math.PI/2; ground.receiveShadow=true; scene.add(ground);
-  const cs=mk(256), cx=cs.getContext('2d'), gr=cx.createRadialGradient(128,128,0,128,128,128);
-  gr.addColorStop(0,'rgba(40,22,0,.85)'); gr.addColorStop(.45,'rgba(40,22,0,.35)'); gr.addColorStop(1,'rgba(40,22,0,0)'); cx.fillStyle=gr; cx.fillRect(0,0,256,256);
-  const contact=new THREE.Mesh(new THREE.PlaneGeometry(3.2,3.2),new THREE.MeshBasicMaterial({map:new THREE.CanvasTexture(cs),transparent:true,depthWrite:false,opacity:.55}));
-  contact.rotation.x=-Math.PI/2; scene.add(contact);
-  const corners=[]; for(const a of [-1,1]) for(const b of [-1,1]) for(const c of [-1,1]) corners.push(new THREE.Vector3(a,b,c).multiplyScalar(SIZE/2));
-  T3={renderer,scene,camera,sun,rim,cube,mats,maps,bumps,paperC,bumpC,faceC,grain,ground,contact,corners,paperKey:'',faceKey:''};
-  apply3D(); return T3;
-}
-function genPaper(i,hex,k){
-  const r=rng(1000+i*77), c=T3.paperC[i], x=c.getContext('2d'), n=parseInt(hex.slice(1),16), R=n>>16&255, G=n>>8&255, B=n&255;
-  const N=17, grid=new Float32Array(N*N); for(let q=0;q<grid.length;q++) grid[q]=r()*2-1;
-  const im=x.createImageData(S3,S3), d=im.data;
-  for(let y=0;y<S3;y++){ const gy=y/S3*(N-1), y0=gy|0, fy=gy-y0;
-    for(let xx=0;xx<S3;xx++){ const gx=xx/S3*(N-1), x0=gx|0, fx=gx-x0;
-      const m=(grid[y0*N+x0]*(1-fx)+grid[y0*N+x0+1]*fx)*(1-fy)+(grid[(y0+1)*N+x0]*(1-fx)+grid[(y0+1)*N+x0+1]*fx)*fy;
-      const v=(r()-.5)*14+m*6, p=(y*S3+xx)*4; d[p]=R+v; d[p+1]=G+v; d[p+2]=B+v; d[p+3]=255; } }
-  x.putImageData(im,0,0);
-  for(let f=0;f<900;f++){ x.strokeStyle=r()<.5?'rgba(255,255,255,.035)':'rgba(0,0,0,.09)'; x.lineWidth=.5+r()*.9; const sx=r()*S3, sy=r()*S3, an=r()*6.28, L=6+r()*26; x.beginPath(); x.moveTo(sx,sy); x.lineTo(sx+Math.cos(an)*L,sy+Math.sin(an)*L); x.stroke(); }
-  const j=()=>(r()-.5)*12, a=S3*.25, b=S3*.75, m=S3/2;
-  const lines=[[0,0,S3,S3],[S3,0,0,S3],[m+j(),0,m+j(),S3],[0,m+j(),S3,m+j()],[a,a,b,a],[b,a,b,b],[b,b,a,b],[a,b,a,a]];
-  lines.forEach(l=>{ x.strokeStyle=`rgba(0,0,0,${.28*k})`; x.lineWidth=2.4; x.beginPath(); x.moveTo(l[0],l[1]); x.lineTo(l[2],l[3]); x.stroke(); x.strokeStyle=`rgba(255,255,255,${.08*k})`; x.lineWidth=1.3; x.beginPath(); x.moveTo(l[0]+1.8,l[1]+1.2); x.lineTo(l[2]+1.8,l[3]+1.2); x.stroke(); });
-  x.strokeStyle=`rgba(255,255,255,${.05+.07*k})`; x.lineWidth=7; x.strokeRect(3.5,3.5,S3-7,S3-7); x.strokeStyle='rgba(0,0,0,.28)'; x.lineWidth=2; x.strokeRect(9,9,S3-18,S3-18);
-  const bx=T3.bumpC[i].getContext('2d'); bx.filter='none'; bx.fillStyle='#808080'; bx.fillRect(0,0,S3,S3); bx.globalAlpha=.35; bx.drawImage(T3.grain,0,0); bx.globalAlpha=1;
-  bx.filter='blur(2px)'; lines.forEach(l=>{ bx.strokeStyle=`rgba(0,0,0,${.75*k})`; bx.lineWidth=5; bx.beginPath(); bx.moveTo(l[0],l[1]); bx.lineTo(l[2],l[3]); bx.stroke(); });
-  bx.strokeStyle='rgba(255,255,255,.5)'; bx.lineWidth=14; bx.strokeRect(0,0,S3,S3); bx.filter='none';
-  T3.bumps[i].needsUpdate=true;
-}
-function drawFace3D(i,content,K){
-  const x=T3.faceC[i].getContext('2d'), S=S3; x.globalCompositeOperation='source-over'; x.globalAlpha=1; x.drawImage(T3.paperC[i],0,0);
-  x.save();
-  if(content==='logo') logoOn(x,0,0,S,K.let);
-  else if(content==='cislo'){ const f=S*.42/capRatio('bold'); txt(x,st.num,S/2,S/2+S*.21,f,'bold',K.acc,'center'); }
-  else if(content==='cislolet'){ const f=S*.34/capRatio('bold'), f2=S*.17/capRatio('light'); txt(x,st.num,S*.52,S*.53,f,'bold',K.acc,'center','alphabetic',-f*.03); txt(x,st.word,S*.54,S*.8,f2,'light',K.let,'center'); }
-  else if(content==='rucne'){ x.save(); x.translate(S/2,S/2); x.rotate(-.12); txt(x,st.num,0,0,S*.75,'hand',K.let,'center','middle'); x.restore(); }
-  else if(content==='let'){ const f=S*.24/capRatio('light'); txt(x,st.word,S/2,S/2+S*.12,f,'light',K.let,'center'); }
-  else if(content==='roky'){ const z=S*.075; txt(x,st.y1,S*.07,S*.07+z*.8,z,'bold',K.let,'left'); txt(x,st.y2,S*.93,S*.93,z,'bold',K.let,'right'); }
-  x.restore();
-  x.globalCompositeOperation='multiply'; x.globalAlpha=.5; x.drawImage(T3.grain,0,0); x.globalCompositeOperation='source-over'; x.globalAlpha=1;
-  T3.maps[i].needsUpdate=true;
-}
-function apply3D(){
-  if(!T3) return; const P=params.kostka3d, K=C();
-  const pk=K.sq+'|'+P.crease; if(pk!==T3.paperKey){ for(let i=0;i<6;i++) genPaper(i,K.sq,P.crease); T3.paperKey=pk; T3.faceKey=''; }
-  const fk=JSON.stringify([K,P.left,P.right,P.top,st.num,st.word,st.y1,st.y2,!!images.logo,fontsLoaded]);
-  if(fk!==T3.faceKey){ const map={1:P.left,4:P.right,2:P.top}; for(let i=0;i<6;i++) drawFace3D(i,map[i]||'prazdna',K); T3.faceKey=fk; }
-  const a=P.light*Math.PI/180; T3.sun.position.set(Math.sin(a)*4,6,Math.cos(a)*4); T3.rim.position.set(-Math.sin(a)*4,1.5,-Math.cos(a)*4);
-  T3.ground.material.opacity=P.shadow; T3.contact.material.opacity=P.shadow;
-  T3.camera.position.set(0,P.zoom*.32,P.zoom); T3.camera.lookAt(0,-.1,0);
-}
-const tmpV=window.THREE?new THREE.Vector3():null;
-function settle(){ let min=Infinity; for(const c of T3.corners){ tmpV.copy(c).applyQuaternion(T3.cube.quaternion); if(tmpV.y<min) min=tmpV.y; } T3.ground.position.y=min-.002; T3.contact.position.y=min-.001; }
-function render3DInto(c,x,y,w,h){
-  if(!ensure3D()) return; apply3D(); settle();
-  const r=T3.renderer, pr=Math.max(1,c.getTransform().a);
-  r.setPixelRatio(pr); r.setSize(w,h,false); T3.camera.aspect=w/h; T3.camera.updateProjectionMatrix(); r.render(T3.scene,T3.camera);
-  c.drawImage(gl,x,y,w,h);
-  r.setPixelRatio(DPR); r.setSize(W,H,false); T3.camera.aspect=W/H; T3.camera.updateProjectionMatrix();
-}
-function loop(){
-  if(T3 && CMAP[st.concept].three && !st.overview){ apply3D(); settle(); T3.renderer.render(T3.scene,T3.camera); }
-  requestAnimationFrame(loop);
+  if(st.overview) paintOverview(ctx,W,H,{});
+  else curS=paintConcept(ctx,0,0,W,H,st.concept,{zoom:st.zoom,pan:st.pan});
 }
 
 /* ================= interaction ================= */
@@ -682,16 +727,7 @@ c2d.addEventListener('pointerup',endPan); c2d.addEventListener('pointercancel',e
 c2d.addEventListener('dblclick',()=>{ if(!st.overview){ st.pan={x:0,y:0}; st.zoom=1; draw(); save(); } });
 c2d.addEventListener('wheel',ev=>{ if(st.overview) return; ev.preventDefault(); st.zoom=Math.min(3,Math.max(.3,st.zoom*Math.exp(-ev.deltaY*.0015))); draw(); save(); },{passive:false});
 
-let rot=null;
-gl.addEventListener('pointerdown',ev=>{ gl.setPointerCapture(ev.pointerId); rot={x:ev.clientX,y:ev.clientY}; gl.classList.add('grabbing'); hideHint(); });
-gl.addEventListener('pointermove',ev=>{ if(!rot||!T3) return; const dx=ev.clientX-rot.x, dy=ev.clientY-rot.y; rot={x:ev.clientX,y:ev.clientY};
-  T3.cube.quaternion.premultiply(new THREE.Quaternion().setFromAxisAngle(new THREE.Vector3(0,1,0),dx*.008));
-  T3.cube.quaternion.premultiply(new THREE.Quaternion().setFromAxisAngle(new THREE.Vector3(1,0,0),dy*.008)); });
-const endRot=()=>{ rot=null; gl.classList.remove('grabbing'); };
-gl.addEventListener('pointerup',endRot); gl.addEventListener('pointercancel',endRot);
-gl.addEventListener('wheel',ev=>{ ev.preventDefault(); const P=params.kostka3d; P.zoom=Math.min(10,Math.max(3.2,P.zoom+ev.deltaY*.004)); syncParam('zoom'); save(); },{passive:false});
-
-function setHint(){ $('hint').textContent = st.overview ? 'Klikni na koncept, který chceš upravit.' : CMAP[st.concept].three ? 'Táhni pro otočení kostky, kolečkem přiblížíš.' : 'Táhni pro posun kompozice, kolečkem přiblížíš, dvojklik vycentruje.'; $('hint').style.opacity='1'; }
+function setHint(){ $('hint').textContent = st.overview ? 'Klikni na koncept, který chceš upravit.' : 'Táhni pro posun kompozice, kolečkem přiblížíš, dvojklik vycentruje.'; $('hint').style.opacity='1'; }
 function hideHint(){ $('hint').style.opacity='0'; }
 
 /* ================= panel UI ================= */
@@ -710,11 +746,12 @@ function renderParams(){
     const lab=document.createElement('label'); lab.htmlFor=id; lab.textContent=p.l; row.appendChild(lab);
     if(p.type==='select'){ row.className='row two'; const s=document.createElement('select'); s.id=id; p.o.forEach(([val,t])=>{ const o=document.createElement('option'); o.value=val; o.textContent=t; s.appendChild(o); }); s.value=v; s.onchange=()=>setParam(p,s.value); row.appendChild(s); }
     else if(p.type==='toggle'){ row.className='row two'; const cb=document.createElement('input'); cb.type='checkbox'; cb.id=id; cb.checked=!!v; cb.onchange=()=>setParam(p,cb.checked); row.appendChild(cb); }
-    else { row.className='row'; const r=document.createElement('input'); r.type='range'; r.id=id; r.min=p.min; r.max=p.max; r.step=p.step; r.value=v; const o=document.createElement('output'); o.id='o_'+p.k; o.textContent=fmt(p,v); r.oninput=()=>{ o.textContent=fmt(p,+r.value); setParam(p,+r.value); }; row.appendChild(r); row.appendChild(o); }
+    else { row.className='row'; const r=document.createElement('input'); r.type='range'; r.id=id; r.min=p.min; r.max=p.max; r.step=p.step; r.value=v; const o=document.createElement('output'); o.textContent=fmt(p,v); r.oninput=()=>{ o.textContent=fmt(p,+r.value); setParam(p,+r.value); }; row.appendChild(r); row.appendChild(o); }
     box.appendChild(row);
   });
+  if(def.link && ON_SITE){ const p=document.createElement('p'); p.className='btns'; p.innerHTML='<a class="btnlink" href="kostka.html">Otevřít editor původní kostky</a>'; box.appendChild(p);
+    const n=document.createElement('p'); n.className='note'; n.textContent='V editoru jdou texty volně posouvat po stěnách a kostka má i 3D náhled. Má vlastní export SVG.'; box.appendChild(n); }
 }
-function syncParam(k){ const p=CMAP[st.concept].params.find(q=>q.k===k), el=$('p_'+k); if(p&&el){ el.value=params[st.concept][k]; const o=$('o_'+k); if(o) o.textContent=fmt(p,params[st.concept][k]); } }
 function setParam(p,v){ params[st.concept][p.k]=v; draw(); save(); }
 function selectConcept(id){ st.concept=id; st.pan={x:0,y:0}; st.zoom=1; renderConcepts(); renderParams(); setHint(); draw(); save(); }
 
@@ -730,13 +767,10 @@ function renderColors(){
     row.appendChild(sw); rb.appendChild(row); });
 }
 $('yellow').addEventListener('input',e=>{ const v=e.target.value.trim(); st.yellow=v.startsWith('#')?v:'#'+v; if(validHex(st.yellow)){ renderColors(); draw(); save(); } });
-
 [['tNum','num'],['tWord','word'],['tY1','y1'],['tY2','y2']].forEach(([id,k])=>$(id).addEventListener('input',e=>{ st[k]=e.target.value; draw(); save(); }));
-
 $('overview').onclick=()=>{ st.overview=!st.overview; renderConcepts(); setHint(); draw(); };
-$('center').onclick=()=>{ st.pan={x:0,y:0}; st.zoom=1; if(T3&&CMAP[st.concept].three) T3.cube.quaternion.setFromEuler(new THREE.Euler(.12,.62,0,'XYZ')); draw(); save(); };
+$('center').onclick=()=>{ st.pan={x:0,y:0}; st.zoom=1; draw(); save(); };
 $('defaults').onclick=()=>{ defaults(st.concept); renderParams(); draw(); save(); };
-
 document.querySelectorAll('[data-bg]').forEach(b=>b.onclick=()=>{ st.bgMode=b.dataset.bg; syncBgButtons(); draw(); save(); });
 function syncBgButtons(){ document.querySelectorAll('[data-bg]').forEach(b=>b.setAttribute('aria-pressed',b.dataset.bg===st.bgMode)); }
 $('blur').addEventListener('input',e=>{ st.blur=+e.target.value; $('oBlur').textContent=st.blur; draw(); save(); });
@@ -748,52 +782,68 @@ $('photoFile').onchange=ev=>{ const f=ev.target.files[0]; if(!f) return; readFil
 $('logoFile').onchange=ev=>{ const f=ev.target.files[0]; if(!f) return; readFile(f,async url=>{ try{ images.logo=await loadImage(url); draw(); storeAsset('vskk-logo',url); toast('Logo nahrané. Vykresluje se místo vestavěného.'); }catch(_){ toast('Logo se nepodařilo načíst, zkus SVG nebo PNG.'); } }); ev.target.value=''; };
 $('logoReset').onclick=()=>{ images.logo=null; try{ localStorage.removeItem('vskk-logo'); }catch(_){} draw(); };
 
-async function addFont(family,dataUrl,name){
-  const buf=await (await fetch(dataUrl)).arrayBuffer();
-  const ff=new FontFace(family,buf,{weight:'1 1000'}); await ff.load(); document.fonts.add(ff);
-  fontsLoaded[family]=name||true; for(const k in capCache) delete capCache[k]; fontStatus(); draw();
+async function addFontBuf(family,buf,name){
+  const ff=new FontFace(family,buf.slice(0),{weight:'1 1000'}); await ff.load(); document.fonts.add(ff);
+  fontsLoaded[family]=name||true; galanoBuf[family]=buf; delete otGalano[family];
+  for(const k in capCache) delete capCache[k]; fontStatus(); draw();
 }
 function fontStatus(){ const names={GalanoL:'Light',GalanoR:'Regular',GalanoB:'Bold'}; const on=Object.keys(names).filter(k=>fontsLoaded[k]).map(k=>names[k]);
-  $('fontStatus').innerHTML = on.length ? 'Nahráno: <b>'+on.join(', ')+'</b>' : 'Zatím se používá náhradní písmo Outfit.'; }
+  $('fontStatus').innerHTML = on.length ? 'Nahráno: <b>'+on.join(', ')+'</b>' : 'Zatím se používá Montserrat.'; }
 document.querySelectorAll('[data-font]').forEach(inp=>inp.onchange=ev=>{ const f=ev.target.files[0], fam=inp.dataset.font; if(!f) return;
-  readFile(f,async url=>{ try{ await addFont(fam,url,f.name); storeAsset('vskk-font-'+fam,url); toast('Písmo nahrané.'); }catch(_){ toast('Tenhle soubor písma se nepodařilo načíst.'); } }); ev.target.value=''; });
+  readFile(f,async url=>{ try{ await addFontBuf(fam,await (await fetch(url)).arrayBuffer(),f.name); storeAsset('vskk-font-'+fam,url); toast('Písmo nahrané.'); }catch(_){ toast('Tenhle soubor písma se nepodařilo načíst.'); } }); ev.target.value=''; });
 
 /* ================= export ================= */
 let downloads=null;
 (async()=>{ try{ downloads=window.claude&&window.claude.use?await window.claude.use('downloads'):null; }catch(_){ downloads=null; } })();
-function saveBlob(blob,name){ const u=URL.createObjectURL(blob), a=document.createElement('a'); a.href=u; a.download=name; document.body.appendChild(a); a.click(); a.remove(); setTimeout(()=>URL.revokeObjectURL(u),4000); }
+function saveBlobLink(blob,name){ const u=URL.createObjectURL(blob), a=document.createElement('a'); a.href=u; a.download=name; document.body.appendChild(a); a.click(); a.remove(); setTimeout(()=>URL.revokeObjectURL(u),4000); }
+async function deliver(blob,name,msg){
+  if(!downloads){ saveBlobLink(blob,name); toast(msg); return; }
+  try{ await downloads.save({filename:name,data:blob}); toast(msg); }
+  catch(err){ if(err&&err.code==='declined') return; saveBlobLink(blob,name); }
+}
+const fileBase=all=> all ? 'vskk-10-let-prehled' : `vskk-10-let-${st.concept}`;
 function exportPng(all){
   const k=2, out=document.createElement('canvas'); out.width=Math.round(W*k); out.height=Math.round(H*k); const o=out.getContext('2d'); o.scale(k,k);
   const bg=!st.transp;
-  if(all) paintOverview(o,W,H,{bg});
-  else if(CMAP[st.concept].three){ if(bg) paintBg(o,0,0,W,H); render3DInto(o,0,0,W,H); }
-  else paintConcept(o,0,0,W,H,st.concept,{bg,zoom:st.zoom,pan:st.pan});
-  const name = all ? 'vskk-10-let-prehled.png' : `vskk-10-let-${st.concept}.png`;
-  out.toBlob(async blob=>{
-    if(!blob){ toast('Export se nepovedl.'); return; }
-    if(!downloads){ saveBlob(blob,name); toast('PNG uloženo'); return; }
-    try{ await downloads.save({filename:name,data:blob}); toast('PNG uloženo'); }
-    catch(err){ if(err&&err.code==='declined') return; saveBlob(blob,name); }
-  },'image/png');
+  if(all) paintOverview(o,W,H,{bg}); else paintConcept(o,0,0,W,H,st.concept,{bg,zoom:st.zoom,pan:st.pan});
+  out.toBlob(blob=>{ if(!blob){ toast('Export se nepovedl.'); return; } deliver(blob,fileBase(all)+'.png','PNG uloženo'); },'image/png');
+}
+async function exportSvg(all){
+  const btns=['exportSvg','exportAllSvg'].map($); btns.forEach(b=>b.disabled=true);
+  try{
+    await ensureOutlines();
+    const c=new SvgCtx(W,H), bg=!st.transp;
+    if(all) paintOverview(c,W,H,{bg}); else paintConcept(c,0,0,W,H,st.concept,{bg,zoom:st.zoom,pan:st.pan});
+    const blob=new Blob([c.toString()],{type:'image/svg+xml'});
+    await deliver(blob,fileBase(all)+'.svg', c.usedLiveText ? 'SVG uloženo. Část textu zůstala jako živé písmo.' : 'SVG uloženo');
+  } catch(err){ console.error(err); toast('SVG se nepodařilo vytvořit.'); }
+  finally{ btns.forEach(b=>b.disabled=false); }
 }
 $('exportOne').onclick=()=>exportPng(false);
 $('exportAll').onclick=()=>exportPng(true);
+$('exportSvg').onclick=()=>exportSvg(false);
+$('exportAllSvg').onclick=()=>exportSvg(true);
+if(!ON_SITE) $('svgNote').textContent='V SVG je logo vektorové. Text se na křivky převede na webu GitHub Pages, kde jsou k dispozici soubory písem. Tady zůstane jako živé písmo.';
 
-function toast(m){ const t=$('toast'); t.textContent=m; t.classList.add('show'); clearTimeout(toast._t); toast._t=setTimeout(()=>t.classList.remove('show'),2400); }
+function toast(m){ const t=$('toast'); t.textContent=m; t.classList.add('show'); clearTimeout(toast._t); toast._t=setTimeout(()=>t.classList.remove('show'),2600); }
 
 /* ================= start ================= */
 load();
 $('yellow').value=st.yellow; $('tNum').value=st.num; $('tWord').value=st.word; $('tY1').value=st.y1; $('tY2').value=st.y2;
 $('blur').value=st.blur; $('oBlur').textContent=st.blur; $('transp').checked=st.transp; syncBgButtons();
 renderConcepts(); renderParams(); renderColors(); fontStatus(); setHint();
-new ResizeObserver(resize).observe(stage); resize(); loop();
+new ResizeObserver(resize).observe(stage); resize();
 (async()=>{
   try{ images.mark=await loadImage(MARK_SRC); for(const k in markCache) delete markCache[k]; draw(); }catch(_){}
   const lg=readAsset('vskk-logo'); if(lg) try{ images.logo=await loadImage(lg); }catch(_){}
   const ph=readAsset('vskk-photo'); if(ph) try{ images.photo=await loadImage(ph); }catch(_){}
-  for(const fam of ['GalanoL','GalanoR','GalanoB']){ const u=readAsset('vskk-font-'+fam); if(u) try{ await addFont(fam,u); }catch(_){} }
-  try{ await Promise.all(['300 40px "Outfit"','400 40px "Outfit"','800 40px "Outfit"','500 40px "Caveat"'].map(f=>document.fonts.load(f))); }catch(_){}
+  for(const fam of ['GalanoL','GalanoR','GalanoB']){ const u=readAsset('vskk-font-'+fam); if(u) try{ await addFontBuf(fam,await (await fetch(u)).arrayBuffer()); }catch(_){} }
+  if(/^(localhost|127\.0\.0\.1|\[::1\])$/.test(location.hostname)){
+    for(const [fam,file] of [['GalanoR','GalanoGrotesque-Regular.otf'],['GalanoB','GalanoGrotesque-SemiBold.otf']]) if(!fontsLoaded[fam]) try{ const r=await fetch('fonts/'+file); if(r.ok) await addFontBuf(fam,await r.arrayBuffer(),file); }catch(_){}
+  }
+  try{ await Promise.all(['300 40px "Montserrat"','400 40px "Montserrat"','800 40px "Montserrat"','400 40px "Caveat"'].map(f=>document.fonts.load(f))); }catch(_){}
   for(const k in capCache) delete capCache[k]; draw();
+  ensureOutlines();
 })();
 })();
 </script>
