@@ -1,6 +1,6 @@
 # VŠKK 10 let – testování konceptů
 
-Interaktivní nástroj pro porovnání konceptů loga k 10. výročí VŠKK. Obsahuje 11 konceptů: siluetu kvádru, posunutý obrys, kostku s ručním písmem, původní izometrickou kostku, „10 ■ let“, shadow casting, oříznuté číslo, průhledné typo, „let“ v nule, číslo s letopočty a svíčku.
+Interaktivní nástroj pro porovnání konceptů loga k 10. výročí VŠKK. Obsahuje 6 konceptů: siluetu kvádru, posunutý obrys, původní izometrickou kostku (dá se otáčet), „10 + logo + let“, oříznuté číslo a „let“ v nule. U každého jde nastavit velikost celku, vlastní číslo a slovo, velikosti a barvy textů.
 
 **Živá stránka:** https://katerinafikarova.github.io/vskk-cube/
 
