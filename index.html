@@ -440,7 +440,8 @@ const CONCEPTS = [
     {k:'style',l:'Styl',type:'select',v:'plna',o:[['plna','Plná silueta'],['steny','S hranami'],['linka','Linkový obrys']]},
     {k:'tag',l:'„10 let“ v rohu',type:'toggle',v:true},
     {k:'tsize',l:'Velikost textu',min:.03,max:.25,step:.005,v:.085},
-    {k:'tcolor',l:'Barva textu',type:'select',v:'auto',o:[['auto','Automaticky'],...COLOR_OPTS]}
+    {k:'tcolor',l:'Barva textu',type:'select',v:'auto',o:[['auto','Automaticky'],...COLOR_OPTS]},
+    {k:'tskew',l:'Zkosení textu',min:-30,max:30,step:1,v:0,u:'°'}
   ],
   draw(c,s,P,K){
     const d=P.depth*s, a=P.angle*Math.PI/180, dx=Math.cos(a)*d, dy=Math.sin(a)*d;
@@ -454,7 +455,8 @@ const CONCEPTS = [
     if(P.tag){
       let best=B[0], bd=-Infinity; B.forEach(p=>{ const v=(p[0]-s/2)*dx+(p[1]-s/2)*dy+(p[0]+p[1])*1e-6; if(v>bd){bd=v;best=p;} });
       const right=best[0]>s/2+dx/2-1, bottom=best[1]>s/2+dy/2-1, pad=s*.07;
-      txt(c,`${N(P)} ${Wd(P)}`, best[0]+(right?-pad:pad), best[1]+(bottom?-pad:pad+s*.06), s*P.tsize,'reg',P.tcolor==='auto'?ink:K[P.tcolor], right?'right':'left');
+      c.save(); c.translate(best[0]+(right?-pad:pad), best[1]+(bottom?-pad:pad+s*.06)); c.transform(1,0,-Math.tan((P.tskew||0)*Math.PI/180),1,0,0);
+      txt(c,`${N(P)} ${Wd(P)}`, 0, 0, s*P.tsize,'reg',P.tcolor==='auto'?ink:K[P.tcolor], right?'right':'left'); c.restore();
     }
   }},
 { id:'obrys', name:'Posunutý obrys', src:'str. 3, vlevo', fit:[1.35,1.35],
