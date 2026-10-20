@@ -422,13 +422,13 @@ function otFor(kind){
 /* ================= face content (isometric cube) ================= */
 const FACE_OPTS=[['logo','Logo VŠKK'],['cislo','Číslo'],['slovo','Slovo'],['cislolet','Číslo + slovo'],['rucne','Číslo ručně'],['roky','Letopočty'],['prazdna','Prázdná']];
 function faceContent(c,content,S,K,P){
-  const col=K[P.ncolor], wcol=K[P.wcolor||P.ncolor], z=P.fsize, zw=P.wsize||1, num=N(P), word=Wd(P);
+  const col=K[P.ncolor], wcol=K[P.wcolor||P.ncolor], z=P.fsize, zw=P.wsize||1, num=N(P), word=Wd(P), nx=(P.numX||0)*S, ny=(P.numY||0)*S, wx=(P.wordX||0)*S, wy=(P.wordY||0)*S;
   if(content==='logo'){ const l=P.lsize||1, o=S*(1-l)/2; logoOn(c,o,o,S*l,K.let); }
-  else if(content==='cislo'){ const f=S*.46*z/capRatio('bold'); txt(c,num,S/2,S/2+S*.23*z,f,'bold',col,'center'); }
-  else if(content==='slovo'){ const f=S*.3*zw/capRatio('bold'); txt(c,word,S/2,S/2+S*.15*zw,f,'bold',wcol,'center'); }
-  else if(content==='cislolet'){ const f=S*.34*z/capRatio('bold'), f2=S*.15*zw/capRatio('light'); txt(c,num,S/2,S*.55,f,'bold',col,'center'); txt(c,word,S/2,S*.82,f2,'light',wcol,'center'); }
-  else if(content==='rucne'){ c.save(); c.translate(S/2,S/2); c.rotate(-.12); txt(c,num,0,0,S*.75*z,'hand',col,'center','middle'); c.restore(); }
-  else if(content==='roky'){ const q=S*.075*zw; txt(c,st.y1,S*.07,S*.07+q*.8,q,'bold',wcol,'left'); txt(c,st.y2,S*.93,S*.93,q,'bold',wcol,'right'); }
+  else if(content==='cislo'){ const f=S*.46*z/capRatio('bold'); txt(c,num,S/2+nx,S/2+S*.23*z+ny,f,'bold',col,'center'); }
+  else if(content==='slovo'){ const f=S*.3*zw/capRatio('bold'); txt(c,word,S/2+wx,S/2+S*.15*zw+wy,f,'bold',wcol,'center'); }
+  else if(content==='cislolet'){ const f=S*.34*z/capRatio('bold'), f2=S*.15*zw/capRatio('light'); txt(c,num,S/2+nx,S*.55+ny,f,'bold',col,'center'); txt(c,word,S/2+wx,S*.82+wy,f2,'light',wcol,'center'); }
+  else if(content==='rucne'){ c.save(); c.translate(S/2+nx,S/2+ny); c.rotate(-.12); txt(c,num,0,0,S*.75*z,'hand',col,'center','middle'); c.restore(); }
+  else if(content==='roky'){ const q=S*.075*zw; txt(c,st.y1,S*.07+wx,S*.07+q*.8+wy,q,'bold',wcol,'left'); txt(c,st.y2,S*.93+wx,S*.93+wy,q,'bold',wcol,'right'); }
 }
 
 /* ================= concepts ================= */
@@ -455,7 +455,7 @@ const CONCEPTS = [
     if(P.tag){
       let best=B[0], bd=-Infinity; B.forEach(p=>{ const v=(p[0]-s/2)*dx+(p[1]-s/2)*dy+(p[0]+p[1])*1e-6; if(v>bd){bd=v;best=p;} });
       const right=best[0]>s/2+dx/2-1, bottom=best[1]>s/2+dy/2-1, pad=s*.07;
-      c.save(); c.translate(best[0]+(right?-pad:pad), best[1]+(bottom?-pad:pad+s*.06)); c.transform(1,0,-Math.tan((P.tskew||0)*Math.PI/180),1,0,0);
+      c.save(); c.translate(best[0]+(right?-pad:pad)+(P.wordX||0)*s, best[1]+(bottom?-pad:pad+s*.06)+(P.wordY||0)*s); c.transform(1,0,-Math.tan((P.tskew||0)*Math.PI/180),1,0,0);
       txt(c,`${N(P)} ${Wd(P)}`, 0, 0, s*P.tsize,'reg',P.tcolor==='auto'?ink:K[P.tcolor], right?'right':'left'); c.restore();
     }
   }},
@@ -475,9 +475,9 @@ const CONCEPTS = [
     if(!P.front) outline(K[P.ocolor]);
     drawLogo(c,0,0,s,K.sq,K.let);
     if(P.front){ c.save(); c.beginPath(); c.rect(0,0,s,s); c.clip(); outline(K.let); c.restore(); c.save(); c.beginPath(); c.rect(-1e4,-1e4,2e4,2e4); c.rect(0,0,s,s); c.clip('evenodd'); outline(K[P.ocolor]); c.restore(); }
-    if(P.tag) txt(c,`${N(P)} ${Wd(P)}`, o+s-sw-s*.05, o+s-sw-s*.05, s*P.tsize,'reg',K[P.tcolor],'right');
+    if(P.tag) txt(c,`${N(P)} ${Wd(P)}`, o+s-sw-s*.05+(P.wordX||0)*s, o+s-sw-s*.05+(P.wordY||0)*s, s*P.tsize,'reg',K[P.tcolor],'right');
   }},
-{ id:'puvodni', name:'Původní kostka', src:'izometrická kostka z původního editoru · táhni pro otočení', fit:[1.42,1.42], link:true, rotate:true,
+{ id:'puvodni', name:'Původní kostka', src:'izometrická kostka z původního editoru · táhni pro otočení', fit:[1.42,1.42], link:true, rotate:true, dragK:2,
   params:[
     {k:'yaw',l:'Otočení',min:-180,max:180,step:1,v:-45,u:'°'},
     {k:'pitch',l:'Náklon',min:-180,max:180,step:.5,v:35.3,u:'°'},
@@ -541,9 +541,9 @@ const CONCEPTS = [
     const f=s*P.cap/capRatio(P.weight), tr=P.track*f, col=K[P.color], g=P.gap*s;
     const w1=tw(c,N(P),f,P.weight,tr)-tr, w2=tw(c,Wd(P),f,P.weight,tr)-tr, T=w1+g+s+g+w2;
     let x=-T/2;
-    txt(c,N(P),x,s/2,f,P.weight,col,'left','alphabetic',tr); x+=w1+g;
+    txt(c,N(P),x+(P.numX||0)*s,s/2+(P.numY||0)*s,f,P.weight,col,'left','alphabetic',tr); x+=w1+g;
     drawLogo(c,x,-s/2,s,K.sq,K.let); x+=s+g;
-    txt(c,Wd(P),x,s/2,f,P.weight,K[P.wcolor],'left','alphabetic',tr);
+    txt(c,Wd(P),x+(P.wordX||0)*s,s/2+(P.wordY||0)*s,f,P.weight,K[P.wcolor],'left','alphabetic',tr);
   }},
 { id:'orez', name:'Oříznuté číslo', src:'Vision 56 · str. 7', fit:[2.25,1.15],
   params:[
@@ -564,8 +564,8 @@ const CONCEPTS = [
     c.save(); c.beginPath(); c.rect(0,0,s,s); c.clip();
     c.translate(s/2+P.offX*s, s/2+P.offY*s); c.rotate(P.rot*Math.PI/180);
     const f=s*P.scale, ch=capRatio('bold')*f, tr=P.track*f, col=K[P.color], w=tw(c,N(P),f,'bold',tr)-tr;
-    txt(c,N(P),-w/2,ch/2,f,'bold',col,'left','alphabetic',tr);
-    if(P.word) txt(c,Wd(P),-w/2,-ch/2-s*.035,f*P.wsize,'bold',K[P.wcolor],'left','alphabetic',f*P.wsize*.02);
+    txt(c,N(P),-w/2+(P.numX||0)*s,ch/2+(P.numY||0)*s,f,'bold',col,'left','alphabetic',tr);
+    if(P.word) txt(c,Wd(P),-w/2+(P.wordX||0)*s,-ch/2-s*.035+(P.wordY||0)*s,f*P.wsize,'bold',K[P.wcolor],'left','alphabetic',f*P.wsize*.02);
     c.restore();
     drawLogo(c,s+g,0,s,K.sq,K.let);
   }},
@@ -582,16 +582,21 @@ const CONCEPTS = [
     const f=s*P.cap/capRatio('bold'), num=N(P), w=tw(c,num,f,'bold'), wl=tw(c,num.slice(-1),f,'bold');
     const sqX=w-P.overlap*wl, right=Math.max(w,sqX+s);
     c.translate(-right/2,0);
-    txt(c,num,0,s/2,f,'bold',K[P.ncolor],'left');
+    txt(c,num,(P.numX||0)*s,s/2+(P.numY||0)*s,f,'bold',K[P.ncolor],'left');
     drawLogo(c,sqX,-s/2,s,K.sq,K.let);
-    txt(c,Wd(P),sqX-s*.03,P.wy*s,P.wsize*s,'reg',K[P.wcolor],'right','middle');
+    txt(c,Wd(P),sqX-s*.03+(P.wordX||0)*s,P.wy*s+(P.wordY||0)*s,P.wsize*s,'reg',K[P.wcolor],'right','middle');
   }}
 ];
 const COMMON=()=>[
   {k:'gscale',l:'Velikost celku',min:.3,max:2.5,step:.01,v:1},
   {k:'tNum',l:'Číslo',type:'text',v:'',ph:()=>st.num},
   {k:'tWord',l:'Slovo',type:'text',v:'',ph:()=>st.word},
-  {k:'case',l:'Velikost písmen',type:'select',v:'auto',o:[['auto','Jak je napsáno'],['lower','minusky'],['upper','VERZÁLKY']]}
+  {k:'case',l:'Velikost písmen',type:'select',v:'auto',o:[['auto','Jak je napsáno'],['lower','minusky'],['upper','VERZÁLKY']]},
+  {k:'dragT',l:'Tažení myší posouvá',type:'select',v:'all',o:[['all','Celou kompozici'],['num','Číslo'],['word','Slovo / text']]},
+  {k:'numX',l:'Číslo ↔',min:-2,max:2,step:.005,v:0},
+  {k:'numY',l:'Číslo ↕',min:-2,max:2,step:.005,v:0},
+  {k:'wordX',l:'Slovo ↔',min:-2,max:2,step:.005,v:0},
+  {k:'wordY',l:'Slovo ↕',min:-2,max:2,step:.005,v:0}
 ];
 CONCEPTS.forEach(d=>{ d.params.unshift(...COMMON()); if(d.id==='puvodni'||d.id==='orez') d.params.find(p=>p.k==='case').v='upper'; });
 const CMAP=Object.fromEntries(CONCEPTS.map(x=>[x.id,x]));
@@ -661,11 +666,12 @@ c2d.addEventListener('pointerdown',ev=>{
     if(CONCEPTS[i]){ st.overview=false; selectConcept(CONCEPTS[i].id); }
     return;
   }
-  c2d.setPointerCapture(ev.pointerId); drag={x:ev.clientX,y:ev.clientY,rot:!!CMAP[st.concept].rotate && !ev.shiftKey}; c2d.classList.add('grabbing'); hideHint();
+  c2d.setPointerCapture(ev.pointerId); const dt=params[st.concept].dragT; drag={x:ev.clientX,y:ev.clientY,t:(dt==='num'||dt==='word')?dt:null,rot:!!CMAP[st.concept].rotate && !ev.shiftKey}; c2d.classList.add('grabbing'); hideHint();
 });
 const wrap=a=>((a+180)%360+360)%360-180;
 c2d.addEventListener('pointermove',ev=>{ if(!drag) return; const dx=ev.clientX-drag.x, dy=ev.clientY-drag.y; drag.x=ev.clientX; drag.y=ev.clientY;
-  if(drag.rot){ const P=params[st.concept]; P.yaw=Math.round(wrap(P.yaw+dx*.5)*10)/10; P.pitch=Math.round(wrap(P.pitch+dy*.5)*10)/10; syncParam('yaw'); syncParam('pitch'); }
+  if(drag.t){ const P=params[st.concept], k=CMAP[st.concept].dragK||1, r=v=>Math.round(Math.max(-2,Math.min(2,v))*1000)/1000; P[drag.t+'X']=r(P[drag.t+'X']+dx/curS*k); P[drag.t+'Y']=r(P[drag.t+'Y']+dy/curS*k); syncParam(drag.t+'X'); syncParam(drag.t+'Y'); }
+  else if(drag.rot){ const P=params[st.concept]; P.yaw=Math.round(wrap(P.yaw+dx*.5)*10)/10; P.pitch=Math.round(wrap(P.pitch+dy*.5)*10)/10; syncParam('yaw'); syncParam('pitch'); }
   else { st.pan.x+=dx/curS; st.pan.y+=dy/curS; }
   draw(); });
 const endPan=()=>{ if(drag){ drag=null; c2d.classList.remove('grabbing'); save(); } };
@@ -675,7 +681,7 @@ c2d.addEventListener('dblclick',()=>{ if(st.overview) return; st.pan={x:0,y:0}; 
   draw(); save(); });
 c2d.addEventListener('wheel',ev=>{ if(st.overview) return; ev.preventDefault(); st.zoom=Math.min(3,Math.max(.3,st.zoom*Math.exp(-ev.deltaY*.0015))); draw(); save(); },{passive:false});
 
-function setHint(){ $('hint').textContent = st.overview ? 'Klikni na koncept, který chceš upravit.' : CMAP[st.concept].rotate ? 'Táhni pro otočení kostky, se Shiftem ji posuneš. Dvojklik vrátí izometrii.' : 'Táhni pro posun kompozice, kolečkem přiblížíš, dvojklik vycentruje.'; $('hint').style.opacity='1'; }
+function setHint(){ const dt=params[st.concept]&&params[st.concept].dragT; $('hint').textContent = st.overview ? 'Klikni na koncept, který chceš upravit.' : (dt==='num'||dt==='word') ? `Táhni myší pro posun ${dt==='num'?'čísla':'slova'}. Přepnout můžeš v nastavení „Tažení myší posouvá“.` : CMAP[st.concept].rotate ? 'Táhni pro otočení kostky, se Shiftem ji posuneš. Dvojklik vrátí izometrii.' : 'Táhni pro posun kompozice, kolečkem přiblížíš, dvojklik vycentruje.'; $('hint').style.opacity='1'; }
 function hideHint(){ $('hint').style.opacity='0'; }
 
 /* ================= panel UI ================= */
@@ -702,7 +708,7 @@ function renderParams(){
     const n=document.createElement('p'); n.className='note'; n.textContent='V editoru jdou texty volně posouvat po stěnách a kostka má i 3D náhled. Má vlastní export SVG.'; box.appendChild(n); }
 }
 function syncParam(k){ const p=CMAP[st.concept].params.find(q=>q.k===k), el=$('p_'+k); if(p&&el){ el.value=params[st.concept][k]; const o=$('o_'+k); if(o) o.textContent=fmt(p,params[st.concept][k]); } }
-function setParam(p,v){ params[st.concept][p.k]=v; draw(); save(); }
+function setParam(p,v){ params[st.concept][p.k]=v; if(p.k==='dragT') setHint(); draw(); save(); }
 function selectConcept(id){ st.concept=id; st.pan={x:0,y:0}; st.zoom=1; renderConcepts(); renderParams(); setHint(); draw(); save(); }
 
 function renderColors(){
