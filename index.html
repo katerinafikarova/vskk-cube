@@ -192,7 +192,7 @@ const MARK_D = [...MARK_SVG.matchAll(/\sd="([^"]+)"/g)].map(m=>m[1]).join(' ');
 const MARK_W = parseFloat((/viewBox="[\d.\s-]*?([\d.]+)\s+[\d.]+"/.exec(MARK_SVG)||[0,460.9])[1]) || 460.9;
 const fontsLoaded = {}, galanoBuf = {};
 
-const N=P=>(P&&P.tNum)||st.num, Wd=P=>(P&&P.tWord)||st.word;
+const N=P=>(P&&P.tNum)||st.num, Wd=P=>{ const w=(P&&P.tWord)||st.word, c=P&&P.case; return c==='lower'?w.toLocaleLowerCase('cs'):c==='upper'?w.toLocaleUpperCase('cs'):w; };
 function validHex(h){ return /^#[0-9a-f]{6}$/i.test(h||''); }
 function C(){ const p=PALETTE(), r=st.roles; return { bg:p[r.bg], sq:p[r.sq], let:p[r.let], acc:p[r.acc] }; }
 function rgba(hex,a){ const n=parseInt(hex.slice(1),16); return `rgba(${n>>16&255},${n>>8&255},${n&255},${a})`; }
@@ -422,7 +422,7 @@ function otFor(kind){
 /* ================= face content (isometric cube) ================= */
 const FACE_OPTS=[['logo','Logo VŠKK'],['cislo','Číslo'],['slovo','Slovo'],['cislolet','Číslo + slovo'],['rucne','Číslo ručně'],['roky','Letopočty'],['prazdna','Prázdná']];
 function faceContent(c,content,S,K,P){
-  const col=K[P.ncolor], wcol=K[P.wcolor||P.ncolor], z=P.fsize, zw=P.wsize||1, num=N(P), word=P.caps?Wd(P).toUpperCase():Wd(P);
+  const col=K[P.ncolor], wcol=K[P.wcolor||P.ncolor], z=P.fsize, zw=P.wsize||1, num=N(P), word=Wd(P);
   if(content==='logo'){ const l=P.lsize||1, o=S*(1-l)/2; logoOn(c,o,o,S*l,K.let); }
   else if(content==='cislo'){ const f=S*.46*z/capRatio('bold'); txt(c,num,S/2,S/2+S*.23*z,f,'bold',col,'center'); }
   else if(content==='slovo'){ const f=S*.3*zw/capRatio('bold'); txt(c,word,S/2,S/2+S*.15*zw,f,'bold',wcol,'center'); }
@@ -489,7 +489,6 @@ const CONCEPTS = [
     {k:'oppLeft',l:'Naproti levé',type:'select',v:'logo',o:FACE_OPTS},
     {k:'oppRight',l:'Naproti pravé',type:'select',v:'cislolet',o:FACE_OPTS},
     {k:'bottom',l:'Spodní stěna',type:'select',v:'roky',o:FACE_OPTS},
-    {k:'caps',l:'Slovo verzálkami',type:'toggle',v:true},
     {k:'ncolor',l:'Barva čísla',type:'select',v:'acc',o:COLOR_OPTS},
     {k:'wcolor',l:'Barva slova',type:'select',v:'acc',o:COLOR_OPTS},
     {k:'fsize',l:'Velikost čísla',min:.3,max:1.6,step:.01,v:1},
@@ -566,7 +565,7 @@ const CONCEPTS = [
     c.translate(s/2+P.offX*s, s/2+P.offY*s); c.rotate(P.rot*Math.PI/180);
     const f=s*P.scale, ch=capRatio('bold')*f, tr=P.track*f, col=K[P.color], w=tw(c,N(P),f,'bold',tr)-tr;
     txt(c,N(P),-w/2,ch/2,f,'bold',col,'left','alphabetic',tr);
-    if(P.word) txt(c,Wd(P).toUpperCase(),-w/2,-ch/2-s*.035,f*P.wsize,'bold',K[P.wcolor],'left','alphabetic',f*P.wsize*.02);
+    if(P.word) txt(c,Wd(P),-w/2,-ch/2-s*.035,f*P.wsize,'bold',K[P.wcolor],'left','alphabetic',f*P.wsize*.02);
     c.restore();
     drawLogo(c,s+g,0,s,K.sq,K.let);
   }},
@@ -591,9 +590,10 @@ const CONCEPTS = [
 const COMMON=()=>[
   {k:'gscale',l:'Velikost celku',min:.3,max:2.5,step:.01,v:1},
   {k:'tNum',l:'Číslo',type:'text',v:'',ph:()=>st.num},
-  {k:'tWord',l:'Slovo',type:'text',v:'',ph:()=>st.word}
+  {k:'tWord',l:'Slovo',type:'text',v:'',ph:()=>st.word},
+  {k:'case',l:'Velikost písmen',type:'select',v:'auto',o:[['auto','Jak je napsáno'],['lower','minusky'],['upper','VERZÁLKY']]}
 ];
-CONCEPTS.forEach(d=>d.params.unshift(...COMMON()));
+CONCEPTS.forEach(d=>{ d.params.unshift(...COMMON()); if(d.id==='puvodni'||d.id==='orez') d.params.find(p=>p.k==='case').v='upper'; });
 const CMAP=Object.fromEntries(CONCEPTS.map(x=>[x.id,x]));
 const params={};
 function defaults(id){ params[id]={}; CMAP[id].params.forEach(p=>params[id][p.k]=p.v); }
